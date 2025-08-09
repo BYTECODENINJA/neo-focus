@@ -53,7 +53,7 @@ NEO FOCUS is built as a native desktop application using Next.js and Electron, p
 ## 🚀 Installation
 
 ### Download Pre-built Releases
-1. Visit the [Releases](https://github.com/BYTECODENINJA/neo-focus/releases) page
+1. Visit the [Releases](https://github.com/BYTECODENINJA/neo-focus/releases) 
 2. Download the appropriate version for your operating system:
    - **Windows**: `NEO-FOCUS-Setup.exe`
    - **macOS**: `NEO-FOCUS.dmg`
@@ -69,7 +69,7 @@ NEO FOCUS is built as a native desktop application using Next.js and Electron, p
 #### Installation Steps
 \`\`\`bash
 # Clone the repository
-git clone https://github.com/yourusername/neo-focus.git
+git clone https://github.com/BYTECODENINJA/neo-focus.git
 cd neo-focus
 
 # Install dependencies
