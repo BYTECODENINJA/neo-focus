@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Google Fonts for Journal fancy fonts */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Merriweather:wght@300;400;700&family=Lora:wght@400;600;700&family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@400;600;700&family=Dancing+Script:wght@400;600;700&family=Great+Vibes&family=Pacifico&family=Lobster&family=Poppins:wght@300;400;600&display=swap');
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    /* Light theme - Purple backgrounds and cards */
+    --background: 248 250 252;
+    --foreground: 15 23 42;
+    --card: 243 232 255; /* purple-100 */
+    --card-foreground: 15 23 42;
+    --popover: 243 232 255;
+    --popover-foreground: 15 23 42;
+    --primary: 139 92 246;
+    --primary-foreground: 255 255 255;
+    --secondary: 226 232 240;
+    --secondary-foreground: 15 23 42;
+    --muted: 241 245 249;
+    --muted-foreground: 100 116 139;
+    --accent: 226 232 240;
+    --accent-foreground: 15 23 42;
+    --destructive: 239 68 68;
+    --destructive-foreground: 248 250 252;
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 139 92 246;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --sidebar-background: 237 233 254; /* purple-50 */
+    --sidebar-foreground: 15 23 42;
+    --sidebar-primary: 139 92 246;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 226 232 240;
+    --sidebar-accent-foreground: 15 23 42;
+    --sidebar-border: 226 232 240;
+    --sidebar-ring: 139 92 246;
+  }
+
+  .dark {
+    /* Dark theme - Black backgrounds and cards */
+    --background: 0 0% 0%; /* pure black */
+    --foreground: 248 250 252;
+    --card: 0 0% 5%; /* very dark gray */
+    --card-foreground: 248 250 252;
+    --popover: 0 0% 3%;
+    --popover-foreground: 248 250 252;
+    --primary: 139 92 246;
+    --primary-foreground: 255 255 255;
+    --secondary: 39 39 42;
+    --secondary-foreground: 248 250 252;
+    --muted: 39 39 42;
+    --muted-foreground: 161 161 170;
+    --accent: 39 39 42;
+    --accent-foreground: 248 250 252;
+    --destructive: 239 68 68;
+    --destructive-foreground: 248 250 252;
+    --border: 39 39 42;
+    --input: 39 39 42;
+    --ring: 139 92 246;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 0 0% 2%; /* almost black */
+    --sidebar-foreground: 248 250 252;
+    --sidebar-primary: 139 92 246;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 39 39 42;
+    --sidebar-accent-foreground: 248 250 252;
+    --sidebar-border: 39 39 42;
+    --sidebar-ring: 139 92 246;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Light theme purple background gradient */
+body {
+  background: linear-gradient(135deg, rgb(243, 232, 255) 0%, rgb(237, 233, 254) 50%, rgb(250, 245, 255) 100%);
+}
+
+/* Dark theme black background */
+.dark body {
+  background: linear-gradient(135deg, rgb(0, 0, 0) 0%, rgb(10, 10, 10) 50%, rgb(5, 5, 5) 100%);
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/30 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary/50;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Focus styles */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+}
+
+/* Card hover effects */
+.card-hover {
+  @apply transition-all duration-200 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1;
+}
+
+.dark .card-hover {
+  @apply hover:shadow-primary/20;
+}
