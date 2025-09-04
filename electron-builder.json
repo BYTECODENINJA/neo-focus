@@ -1,0 +1,31 @@
+{
+  "appId": "com.neofocus.desktop",
+  "productName": "NEO FOCUS",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    "out/**/*",
+    "public/**/*",
+    "electron/**/*",
+    "package.json",
+    "node_modules/electron/**/*",
+    "node_modules/electron-squirrel-startup/**/*"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "neo-focus.ico"
+  },
+  "portable": {
+    "artifactName": "NEO-FOCUS.exe"
+  },
+  "asar": false,
+  "compression": "normal"
+}
