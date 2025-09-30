@@ -1,0 +1,132 @@
+/* Theme Variables */
+:root {
+  --gradient-primary: linear-gradient(135deg, #8b5cf6, #a855f7);
+  --gradient-secondary: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  --accent-primary: #8b5cf6;
+  --accent-primary-alpha: rgba(139, 92, 246, 0.2);
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Purple Light Theme */
+.theme-purple {
+  --bg-primary: #faf7ff;
+  --bg-secondary: rgba(255, 255, 255, 0.8);
+  --bg-hover: rgba(139, 92, 246, 0.1);
+  --sidebar-bg: rgba(255, 255, 255, 0.9);
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --modal-bg: rgba(255, 255, 255, 0.95);
+  --input-bg: rgba(255, 255, 255, 0.9);
+  --border-color: rgba(139, 92, 246, 0.2);
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --scrollbar-thumb: rgba(139, 92, 246, 0.3);
+  --scrollbar-thumb-hover: rgba(139, 92, 246, 0.5);
+}
+
+/* Black Dark Theme */
+.theme-dark {
+  --bg-primary: #000000;
+  --bg-secondary: rgba(17, 17, 17, 0.9);
+  --bg-hover: rgba(255, 255, 255, 0.1);
+  --sidebar-bg: rgba(17, 17, 17, 0.95);
+  --card-bg: rgba(17, 17, 17, 0.9);
+  --modal-bg: rgba(17, 17, 17, 0.98);
+  --input-bg: rgba(31, 31, 31, 0.9);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --text-primary: #ffffff;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --gradient-primary: linear-gradient(135deg, #8b5cf6, #a855f7);
+  --gradient-secondary: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+/* Theme-specific body backgrounds */
+.theme-purple body {
+  background: var(--bg-primary);
+}
+
+.theme-dark body {
+  background: var(--bg-primary);
+}
+
+/* Glassmorphism effects */
+.theme-purple .card,
+.theme-purple .sidebar,
+.theme-purple .main-header {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.theme-dark .card,
+.theme-dark .sidebar,
+.theme-dark .main-header {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Theme-specific adjustments */
+.theme-dark .stat-card {
+  background: rgba(17, 17, 17, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-dark .calendar-day {
+  background: rgba(17, 17, 17, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.theme-dark .task-item {
+  background: rgba(17, 17, 17, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-dark .habit-item {
+  background: rgba(17, 17, 17, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-dark .goal-item {
+  background: rgba(17, 17, 17, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-dark .journal-entry {
+  background: rgba(17, 17, 17, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-dark .note-item {
+  background: rgba(31, 31, 31, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-dark .activity-item {
+  background: rgba(31, 31, 31, 0.8);
+}
+
+.theme-dark .habit-day {
+  background: rgba(31, 31, 31, 0.8);
+}
+
+.theme-dark .filter-btn {
+  background: rgba(17, 17, 17, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-dark .toolbar-btn {
+  background: rgba(17, 17, 17, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Theme transition */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
