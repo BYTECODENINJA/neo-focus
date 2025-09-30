@@ -1,0 +1,394 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Purple Light Theme */
+  --background: 248 250 252; /* slate-50 */
+  --foreground: 15 23 42; /* slate-900 */
+  --card: 255 255 255; /* white */
+  --card-foreground: 15 23 42; /* slate-900 */
+  --popover: 255 255 255; /* white */
+  --popover-foreground: 15 23 42; /* slate-900 */
+  --primary: 139 92 246; /* violet-500 */
+  --primary-foreground: 255 255 255; /* white */
+  --secondary: 241 245 249; /* slate-100 */
+  --secondary-foreground: 15 23 42; /* slate-900 */
+  --muted: 241 245 249; /* slate-100 */
+  --muted-foreground: 100 116 139; /* slate-500 */
+  --accent: 241 245 249; /* slate-100 */
+  --accent-foreground: 15 23 42; /* slate-900 */
+  --destructive: 239 68 68; /* red-500 */
+  --destructive-foreground: 255 255 255; /* white */
+  --border: 226 232 240; /* slate-200 */
+  --input: 226 232 240; /* slate-200 */
+  --ring: 139 92 246; /* violet-500 */
+  --radius: 0.5rem;
+}
+
+.dark {
+  /* Black Dark Theme */
+  --background: 0 0 0; /* black */
+  --foreground: 248 250 252; /* slate-50 */
+  --card: 10 10 10; /* very dark gray */
+  --card-foreground: 248 250 252; /* slate-50 */
+  --popover: 10 10 10; /* very dark gray */
+  --popover-foreground: 248 250 252; /* slate-50 */
+  --primary: 139 92 246; /* violet-500 */
+  --primary-foreground: 255 255 255; /* white */
+  --secondary: 30 30 30; /* dark gray */
+  --secondary-foreground: 248 250 252; /* slate-50 */
+  --muted: 30 30 30; /* dark gray */
+  --muted-foreground: 148 163 184; /* slate-400 */
+  --accent: 30 30 30; /* dark gray */
+  --accent-foreground: 248 250 252; /* slate-50 */
+  --destructive: 239 68 68; /* red-500 */
+  --destructive-foreground: 255 255 255; /* white */
+  --border: 39 39 42; /* zinc-800 */
+  --input: 39 39 42; /* zinc-800 */
+  --ring: 139 92 246; /* violet-500 */
+}
+
+/* Tenor Sans Font */
+.tenor-sans-regular {
+  font-family: "Tenor Sans", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  /* Prevent browser zoom scaling */
+  zoom: 1;
+  -moz-transform: scale(1);
+  -moz-transform-origin: 0 0;
+}
+
+body {
+  color: hsl(var(--foreground));
+  background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%);
+  font-feature-settings: "rlig" 1, "calt" 1;
+  min-height: 100vh;
+  font-family: "Tenor Sans", sans-serif;
+  /* Fixed width to prevent scaling with display settings */
+  width: 1920px;
+  max-width: 1920px;
+  margin: 0 auto;
+  overflow-x: auto;
+}
+
+/* App container with fixed dimensions */
+#app-container {
+  width: 1920px;
+  min-width: 1920px;
+  max-width: 1920px;
+  margin: 0 auto;
+  transform-origin: top left;
+  transform: scale(1);
+}
+
+/* Prevent zoom scaling */
+@media screen and (-webkit-min-device-pixel-ratio: 1.25), screen and (min-resolution: 120dpi) {
+  body {
+    zoom: 0.8;
+  }
+}
+
+@media screen and (-webkit-min-device-pixel-ratio: 1.5), screen and (min-resolution: 144dpi) {
+  body {
+    zoom: 0.6667;
+  }
+}
+
+@media screen and (-webkit-min-device-pixel-ratio: 1.75), screen and (min-resolution: 168dpi) {
+  body {
+    zoom: 0.5714;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.8);
+}
+
+/* Glassmorphism effects */
+.glass-card {
+  background: hsl(var(--card) / 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid hsl(var(--border) / 0.2);
+  box-shadow: 0 8px 32px hsl(var(--foreground) / 0.1);
+}
+
+.glass-sidebar {
+  background: hsl(var(--card) / 0.9);
+  backdrop-filter: blur(15px);
+  border-right: 1px solid hsl(var(--border) / 0.2);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Focus states */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+}
+
+/* Button variants */
+.btn-primary {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90 focus-ring;
+}
+
+.btn-secondary {
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-ring;
+}
+
+/* Card hover effects */
+.card-hover {
+  @apply transition-all duration-200 hover:shadow-lg hover:scale-[1.02];
+}
+
+/* Rich text editor styles */
+.ql-container {
+  font-family: "Tenor Sans", sans-serif !important;
+}
+
+.ql-editor {
+  font-family: "Tenor Sans", sans-serif !important;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #000000 !important;
+}
+
+.ql-editor * {
+  color: #000000 !important;
+}
+
+.ql-editor h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 1em 0 0.5em 0;
+  color: #000000 !important;
+}
+
+.ql-editor h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 0.83em 0 0.5em 0;
+  color: #000000 !important;
+}
+
+.ql-editor h3 {
+  font-size: 1.17em;
+  font-weight: 600;
+  margin: 1em 0 0.5em 0;
+  color: #000000 !important;
+}
+
+.ql-editor p {
+  margin: 0.5em 0;
+  color: #000000 !important;
+}
+
+.ql-editor strong {
+  font-weight: 700;
+  color: #000000 !important;
+}
+
+.ql-editor em {
+  font-style: italic;
+  color: #000000 !important;
+}
+
+.ql-editor u {
+  text-decoration: underline;
+  color: #000000 !important;
+}
+
+.ql-editor s {
+  text-decoration: line-through;
+  color: #000000 !important;
+}
+
+.ql-editor ul,
+.ql-editor ol {
+  margin: 0.5em 0;
+  padding-left: 2em;
+}
+
+.ql-editor ul li,
+.ql-editor ol li {
+  margin: 0.25em 0;
+  color: #000000 !important;
+}
+
+.ql-editor blockquote {
+  border-left: 4px solid hsl(var(--primary));
+  padding-left: 1em;
+  margin: 1em 0;
+  font-style: italic;
+  color: #000000 !important;
+}
+
+.ql-editor pre {
+  background: hsl(var(--muted));
+  padding: 1em;
+  border-radius: 4px;
+  overflow-x: auto;
+  color: #000000 !important;
+}
+
+.ql-editor code {
+  background: hsl(var(--muted));
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: monospace;
+  color: #000000 !important;
+}
+
+.ql-editor a {
+  color: hsl(var(--primary)) !important;
+  text-decoration: underline;
+}
+
+.ql-editor .ql-align-center {
+  text-align: center;
+}
+
+.ql-editor .ql-align-right {
+  text-align: right;
+}
+
+.ql-editor .ql-align-justify {
+  text-align: justify;
+}
+
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Notebook content display */
+.notebook-content {
+  font-family: "Tenor Sans", sans-serif !important;
+  color: #000000 !important;
+  line-height: 1.8;
+}
+
+.notebook-content * {
+  color: #000000 !important;
+}
+
+.notebook-content h1,
+.notebook-content h2,
+.notebook-content h3,
+.notebook-content h4,
+.notebook-content h5,
+.notebook-content h6 {
+  font-weight: 600;
+  margin: 1em 0 0.5em 0;
+  color: #000000 !important;
+}
+
+.notebook-content p {
+  margin: 0.5em 0;
+}
+
+.notebook-content ul,
+.notebook-content ol {
+  margin: 0.5em 0;
+  padding-left: 2em;
+}
+
+.notebook-content strong {
+  font-weight: 700;
+}
+
+.notebook-content em {
+  font-style: italic;
+}
+
+.notebook-content u {
+  text-decoration: underline;
+}
+
+.notebook-content blockquote {
+  border-left: 4px solid hsl(var(--primary));
+  padding-left: 1em;
+  margin: 1em 0;
+  font-style: italic;
+}
+
+/* Theme transition */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Loading states */
+.loading-spinner {
+  @apply animate-spin rounded-full border-2 border-muted border-t-primary;
+}
+
+/* Responsive design disabled for fixed width */
+@media (max-width: 1920px) {
+  body {
+    overflow-x: auto;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
