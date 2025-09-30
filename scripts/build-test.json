@@ -1,0 +1,23 @@
+{
+  "name": "Build and Test Script",
+  "description": "Comprehensive build and testing configuration",
+  "scripts": {
+    "prebuild": "npm run lint && npm run type-check",
+    "build": "next build",
+    "postbuild": "npm run copy-assets",
+    "copy-assets": "cp -r electron out/ && cp package.json out/",
+    "electron-pack": "electron-builder",
+    "test-build": "npm run build && npm run electron-pack --dir",
+    "test-package": "npm run build && npm run electron-pack",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "build-steps": [
+    "1. Install dependencies: npm install",
+    "2. Run type checking: npm run type-check",
+    "3. Run linting: npm run lint",
+    "4. Build Next.js app: npm run build",
+    "5. Copy Electron files: npm run copy-assets",
+    "6. Package with Electron Builder: npm run electron-pack"
+  ]
+}
