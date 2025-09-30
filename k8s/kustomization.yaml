@@ -1,0 +1,41 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: aura-focus
+  namespace: aura-focus
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - persistent-volume.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - hpa.yaml
+  - network-policy.yaml
+  - service-monitor.yaml
+
+commonLabels:
+  app: aura-focus
+  version: v1.0.0
+
+images:
+  - name: aura-focus
+    newTag: latest
+
+patchesStrategicMerge:
+  - patches/production-patch.yaml
+
+configMapGenerator:
+  - name: aura-focus-build-info
+    literals:
+      - BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+      - GIT_COMMIT=$(git rev-parse --short HEAD)
+      - VERSION=v1.0.0
+
+secretGenerator:
+  - name: aura-focus-runtime-secrets
+    envs:
+      - secrets.env

@@ -1,0 +1,28 @@
+# AURA Focus - Python Requirements
+# Most dependencies are built into Python standard library
+
+# Core dependencies (built-in)
+# tkinter - GUI framework (built-in)
+sqlite3 - Database (built-in) 
+# json - Configuration (built-in)
+# logging - Logging (built-in)
+# threading - Timer functionality (built-in)
+# datetime - Date/time handling (built-in)
+# calendar - Calendar functionality (built-in)
+
+# Optional dependencies for enhanced functionality
+# Uncomment if you want to add these features:
+
+# pillow>=9.0.0          # For advanced image handling
+# requests>=2.28.0       # For web features/sync
+# cryptography>=3.4.8    # For data encryption
+# matplotlib>=3.5.0      # For advanced charts/graphs
+# pandas>=1.4.0          # For data analysis features
+pywebview>=4.4.1         # For web-based GUI
+plyer>=2.1.0             # For platform-independent notifications and system features
+pathlib                 # For file path handling
+
+# Development dependencies (optional)
+# pytest>=7.0.0          # For testing
+# black>=22.0.0          # For code formatting
+# flake8>=4.0.0          # For code linting

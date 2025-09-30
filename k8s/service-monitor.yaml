@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: aura-focus-metrics
+  namespace: aura-focus
+  labels:
+    app: aura-focus
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: aura-focus
+  endpoints:
+  - port: http
+    path: /api/metrics
+    interval: 30s
+    scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+    - aura-focus

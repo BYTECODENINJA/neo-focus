@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aura-focus
+  labels:
+    name: aura-focus
+    app: aura-focus
+    environment: production
