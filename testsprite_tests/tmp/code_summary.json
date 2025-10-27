@@ -1,0 +1,316 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "JavaScript",
+    "Next.js",
+    "React",
+    "Tailwind CSS",
+    "Python",
+    "SQLite",
+    "localStorage"
+  ],
+  "features": [
+    {
+      "name": "Focus Timer (Pomodoro)",
+      "description": "Customizable work and break sessions with visual progress indicators, audio notifications, and session persistence",
+      "files": [
+        "components/focus-mode.tsx",
+        "contexts/timer-context.tsx"
+      ],
+      "api_doc": {
+        "paths": {
+          "/": {
+            "get": {
+              "summary": "Display focus timer interface",
+              "responses": {
+                "200": {
+                  "description": "Focus timer page loaded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Calendar & Events",
+      "description": "Event management with categories, recurring events, and color-coded organization",
+      "files": [
+        "components/calendar.tsx",
+        "components/daily-schedule.tsx"
+      ],
+      "api_doc": {
+        "paths": {
+          "/api/calendar-events": {
+            "get": {
+              "summary": "Get all calendar events",
+              "responses": {
+                "200": {
+                  "description": "List of calendar events"
+                }
+              }
+            },
+            "post": {
+              "summary": "Create a new calendar event",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "title": {"type": "string"},
+                        "date": {"type": "string"},
+                        "time": {"type": "string"},
+                        "category": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "201": {
+                  "description": "Event created successfully"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Task Management",
+      "description": "Task creation, editing, and management with priorities, due dates, and completion tracking",
+      "files": [
+        "components/tasks.tsx"
+      ],
+      "api_doc": {
+        "paths": {
+          "/api/tasks": {
+            "get": {
+              "summary": "Get all tasks",
+              "responses": {
+                "200": {
+                  "description": "List of tasks"
+                }
+              }
+            },
+            "post": {
+              "summary": "Create a new task",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "title": {"type": "string"},
+                        "description": {"type": "string"},
+                        "priority": {"type": "string"},
+                        "dueDate": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "201": {
+                  "description": "Task created successfully"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Habit Tracking",
+      "description": "Habit creation and tracking with streak counting, completion history, and progress visualization",
+      "files": [
+        "components/habits.tsx"
+      ],
+      "api_doc": {
+        "paths": {
+          "/": {
+            "get": {
+              "summary": "Display habit tracking interface",
+              "responses": {
+                "200": {
+                  "description": "Habits page loaded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Goal Management",
+      "description": "Goal setting and progress tracking with categories, deadlines, and visual progress indicators",
+      "files": [
+        "components/goals.tsx"
+      ],
+      "api_doc": {
+        "paths": {
+          "/": {
+            "get": {
+              "summary": "Display goals interface",
+              "responses": {
+                "200": {
+                  "description": "Goals page loaded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Journaling",
+      "description": "Daily journal entries with mood tracking, energy levels, gratitude, and rich text editing",
+      "files": [
+        "components/journal.tsx"
+      ],
+      "api_doc": {
+        "paths": {
+          "/": {
+            "get": {
+              "summary": "Display journal interface",
+              "responses": {
+                "200": {
+                  "description": "Journal page loaded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Notebook",
+      "description": "Rich text note creation with categories, tags, and search functionality",
+      "files": [
+        "components/notebook.tsx"
+      ],
+      "api_doc": {
+        "paths": {
+          "/": {
+            "get": {
+              "summary": "Display notebook interface",
+              "responses": {
+                "200": {
+                  "description": "Notebook page loaded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Reminders",
+      "description": "Customizable reminders with time-based notifications and scheduling",
+      "files": [
+        "components/reminders.tsx"
+      ],
+      "api_doc": {
+        "paths": {
+          "/": {
+            "get": {
+              "summary": "Display reminders interface",
+              "responses": {
+                "200": {
+                  "description": "Reminders page loaded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Analytics Dashboard",
+      "description": "Productivity metrics, charts, and data visualization for tasks, habits, goals, and focus sessions",
+      "files": [
+        "components/analytics.tsx"
+      ],
+      "api_doc": {
+        "paths": {
+          "/": {
+            "get": {
+              "summary": "Display analytics dashboard",
+              "responses": {
+                "200": {
+                  "description": "Analytics page loaded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Settings",
+      "description": "User settings, preferences, theme customization, and data management",
+      "files": [
+        "components/user-settings.tsx"
+      ],
+      "api_doc": {
+        "paths": {
+          "/": {
+            "get": {
+              "summary": "Display settings interface",
+              "responses": {
+                "200": {
+                  "description": "Settings page loaded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Database Management",
+      "description": "Data persistence layer with auto-save functionality for all application features",
+      "files": [
+        "lib/database.ts",
+        "database_manager.py"
+      ],
+      "api_doc": {
+        "paths": {
+          "/api/data": {
+            "get": {
+              "summary": "Get all application data",
+              "responses": {
+                "200": {
+                  "description": "All data retrieved"
+                }
+              }
+            }
+          },
+          "/api/save": {
+            "post": {
+              "summary": "Save application data",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Data saved successfully"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

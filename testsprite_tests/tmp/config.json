@@ -1,0 +1,16 @@
+{
+  "status": "commited",
+  "type": "backend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "backendAuthType": "public",
+  "executionArgs": {
+    "projectName": "neo focus",
+    "projectPath": "C:\\Users\\Admin\\Desktop\\neo focus",
+    "testIds": [],
+    "additionalInstruction": "",
+    "envs": {
+      "API_KEY": ""
+    }
+  }
+}
