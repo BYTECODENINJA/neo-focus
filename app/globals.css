@@ -1,0 +1,228 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Google Fonts for Journal fancy fonts */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Merriweather:wght@300;400;700&family=Lora:wght@400;600;700&family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@400;600;700&family=Dancing+Script:wght@400;600;700&family=Great+Vibes&family=Pacifico&family=Lobster&family=Poppins:wght@300;400;600&display=swap');
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 255 255 255;
+    --foreground: 0 0 0;
+    --card: 255 255 255;
+    --card-foreground: 0 0 0;
+    --popover: 255 255 255;
+    --popover-foreground: 0 0 0;
+    --primary: 0 0 0;
+    --primary-foreground: 255 255 255;
+    --secondary: 242 242 242;
+    --secondary-foreground: 0 0 0;
+    --muted: 242 242 242;
+    --muted-foreground: 128 128 128;
+    --accent: 242 242 242;
+    --accent-foreground: 0 0 0;
+    --destructive: 255 0 0;
+    --destructive-foreground: 255 255 255;
+    --border: 229 229 229;
+    --input: 229 229 229;
+    --ring: 0 0 0;
+    --radius: 0.5rem;
+    --chart-1: 210 90% 50%;
+    --chart-2: 210 90% 60%;
+    --chart-3: 210 90% 70%;
+    --chart-4: 210 90% 80%;
+    --chart-5: 210 90% 90%;
+    --sidebar-background: 240 248 255;
+    --sidebar-foreground: 0 0 0;
+    --sidebar-primary: 65 105 225;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 173 216 230;
+    --sidebar-accent-foreground: 0 0 0;
+    --sidebar-border: 173 216 230;
+    --sidebar-ring: 65 105 225;
+  }
+
+  .dark {
+    --background: 0 0 0;
+    --foreground: 255 255 255;
+    --card: 0 0 0;
+    --card-foreground: 255 255 255;
+    --popover: 0 0 0;
+    --popover-foreground: 255 255 255;
+    --primary: 255 255 255;
+    --primary-foreground: 0 0 0;
+    --secondary: 40 40 40;
+    --secondary-foreground: 255 255 255;
+    --muted: 40 40 40;
+    --muted-foreground: 128 128 128;
+    --accent: 40 40 40;
+    --accent-foreground: 255 255 255;
+    --destructive: 255 0 0;
+    --destructive-foreground: 255 255 255;
+    --border: 40 40 40;
+    --input: 40 40 40;
+    --ring: 255 255 255;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 0 0% 2%;
+    --sidebar-foreground: 248 250 252;
+    --sidebar-primary: 139 92 246;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 39 39 42;
+    --sidebar-accent-foreground: 248 250 252;
+    --sidebar-border: 39 39 42;
+    --sidebar-ring: 139 92 246;
+  }
+  
+  .ultra-light {
+    --background: 240 5.9% 90%;
+    --foreground: 240 10% 3.9%;
+    --card: 240 5.9% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 240 5.9% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 270 50% 50%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 150 40% 60%;
+    --secondary-foreground: 240 10% 3.9%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
+    --radius: 0.5rem;
+    --sidebar-background: 210 10% 40%;
+    --sidebar-foreground: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Light theme blue background gradient */
+body {
+  background: linear-gradient(135deg, rgb(240, 248, 255) 0%, rgb(224, 255, 255) 50%, rgb(240, 248, 255) 100%);
+}
+
+/* Dark theme black background */
+.dark body {
+  background: linear-gradient(135deg, rgb(0, 0, 0) 0%, rgb(10, 10, 10) 50%, rgb(5, 5, 5) 100%);
+}
+
+/* Ultra light theme gradient */
+.ultra-light body {
+  background: linear-gradient(135deg, hsl(0, 0%, 98%) 0%, hsl(0, 0%, 96%) 50%, hsl(0, 0%, 98%) 100%);
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/30 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary/50;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Focus styles */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+}
+
+/* Card hover effects */
+.card-hover {
+  @apply transition-all duration-200 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1;
+}
+
+.dark .card-hover {
+  @apply hover:shadow-primary/20;
+}
+
+.light .light-placeholder::placeholder {
+  color: white;
+}
+
+/* ReactQuill custom styles - ensure formatting only applies to selection */
+.ql-toolbar button[data-value="1"],
+.ql-toolbar button[data-value="2"],
+.ql-toolbar button[data-value="3"] {
+  cursor: pointer;
+}
+
+/* Prevent auto-formatting on entire document when no selection */
+.ql-editor {
+  outline: none;
+}
+
+/* Style selected text only */
+.ql-editor p,
+.ql-editor h1,
+.ql-editor h2,
+.ql-editor h3,
+.ql-editor h4,
+.ql-editor h5,
+.ql-editor h6 {
+  margin: 0.5em 0;
+}

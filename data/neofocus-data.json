@@ -1,0 +1,199 @@
+{
+  "events": [
+    {
+      "id": "test-merge-1",
+      "title": "Test Merge 1",
+      "description": "Testing merge functionality",
+      "date": "2025-10-25",
+      "time": "20:00",
+      "type": "personal",
+      "color": "bg-green-500",
+      "createdAt": "2025-10-25T19:45:00.000Z",
+      "updatedAt": "2025-10-25T19:45:00.000Z",
+      "eventType": "schedule",
+      "startTime": "20:00",
+      "endTime": "21:00",
+      "location": "Home",
+      "comments": []
+    },
+    {
+      "id": "1761537820510",
+      "title": "Employerbility class",
+      "description": "",
+      "date": "2025-10-27",
+      "time": "07:00",
+      "type": "personal",
+      "color": "bg-red-500",
+      "createdAt": "2025-10-27T04:03:40.510Z",
+      "updatedAt": "2025-10-27T04:03:40.569Z",
+      "eventType": "schedule",
+      "startTime": "07:00",
+      "endTime": "09:00",
+      "location": "",
+      "comments": []
+    },
+    {
+      "id": "1761537855705",
+      "title": "Read fullstack developer guide",
+      "description": "",
+      "date": "2025-10-27",
+      "time": "09:00",
+      "type": "personal",
+      "color": "bg-purple-500",
+      "createdAt": "2025-10-27T04:04:15.705Z",
+      "updatedAt": "2025-10-27T04:04:15.802Z",
+      "eventType": "schedule",
+      "startTime": "09:00",
+      "endTime": "12:00",
+      "location": "",
+      "comments": []
+    },
+    {
+      "id": "1761537890980",
+      "title": "Go and buy lunch",
+      "description": "",
+      "date": "2025-10-27",
+      "time": "12:00",
+      "type": "personal",
+      "color": "bg-blue-500",
+      "createdAt": "2025-10-27T04:04:50.980Z",
+      "updatedAt": "2025-10-27T04:04:51.008Z",
+      "eventType": "schedule",
+      "startTime": "12:00",
+      "endTime": "13:00",
+      "location": "",
+      "comments": []
+    },
+    {
+      "id": "1761537940565",
+      "title": "Read datastructures and algorithms",
+      "description": "",
+      "date": "2025-10-27",
+      "time": "14:00",
+      "type": "personal",
+      "color": "bg-orange-500",
+      "createdAt": "2025-10-27T04:05:40.565Z",
+      "updatedAt": "2025-10-27T04:05:40.640Z",
+      "eventType": "schedule",
+      "startTime": "14:00",
+      "endTime": "16:00",
+      "location": "",
+      "comments": []
+    },
+    {
+      "id": "1761538030695",
+      "title": "Implement a mini project on what i have learned",
+      "description": "",
+      "date": "2025-10-27",
+      "time": "16:00",
+      "type": "personal",
+      "color": "bg-pink-500",
+      "createdAt": "2025-10-27T04:07:10.695Z",
+      "updatedAt": "2025-10-27T04:07:10.772Z",
+      "eventType": "schedule",
+      "startTime": "16:00",
+      "endTime": "17:30",
+      "location": "",
+      "comments": []
+    }
+  ],
+  "tasks": [
+    {
+      "id": "1761538314110",
+      "title": "Fetch water",
+      "description": "",
+      "completed": false,
+      "priority": "medium",
+      "dueDate": "2025-10-28",
+      "createdAt": "2025-10-27T04:11:54.110Z"
+    },
+    {
+      "id": "1761538291216",
+      "title": "Clean my room",
+      "description": "",
+      "completed": false,
+      "priority": "high",
+      "dueDate": "2025-10-27",
+      "createdAt": "2025-10-27T04:11:31.216Z"
+    },
+    {
+      "id": "1761538258713",
+      "title": "Go for shopping",
+      "description": "",
+      "completed": false,
+      "priority": "medium",
+      "dueDate": "2025-10-29",
+      "createdAt": "2025-10-27T04:10:58.713Z"
+    },
+    {
+      "id": "1761538235054",
+      "title": "Listen to music",
+      "description": "",
+      "completed": false,
+      "priority": "high",
+      "dueDate": "2025-10-27",
+      "createdAt": "2025-10-27T04:10:35.054Z"
+    },
+    {
+      "id": "1761538216612",
+      "title": "Go buy breakfast",
+      "description": "",
+      "completed": false,
+      "priority": "high",
+      "dueDate": "2025-10-27",
+      "createdAt": "2025-10-27T04:10:16.612Z"
+    },
+    {
+      "id": "1761538172909",
+      "title": "Call my auntie",
+      "description": "",
+      "completed": false,
+      "priority": "high",
+      "dueDate": "2025-10-27",
+      "createdAt": "2025-10-27T04:09:32.909Z"
+    },
+    {
+      "id": "1761538139811",
+      "title": "Take breakfast",
+      "description": "",
+      "completed": false,
+      "priority": "medium",
+      "dueDate": "2025-10-27",
+      "createdAt": "2025-10-27T04:08:59.811Z"
+    }
+  ],
+  "habits": [],
+  "goals": [],
+  "notes": [
+    {
+      "id": "1761420387393",
+      "title": "New Note",
+      "content": "",
+      "tags": [],
+      "createdAt": "2025-10-25T19:26:27.393Z",
+      "updatedAt": "2025-10-25T19:26:27.393Z"
+    },
+    {
+      "id": "1761419693247",
+      "title": "New Note",
+      "content": "",
+      "tags": [],
+      "createdAt": "2025-10-25T19:14:53.247Z",
+      "updatedAt": "2025-10-25T19:14:53.247Z"
+    }
+  ],
+  "journals": [],
+  "reminders": [],
+  "achievements": [],
+  "focusSessions": [],
+  "settings": {
+    "name": "User",
+    "theme": "dark",
+    "notifications": true,
+    "autoSave": true,
+    "focusDuration": 25,
+    "breakDuration": 5,
+    "longBreakDuration": 15,
+    "sessionsBeforeLongBreak": 4
+  }
+}
