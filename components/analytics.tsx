@@ -33,22 +33,54 @@ export function Analytics({ tasks, habits, goals, journals, events, achievements
   const analytics = useMemo(() => {
     const now = new Date()
     const startDate = new Date()
+    let timeUnit: 'day' | 'month' = 'day'
+    const timePoints: { date: Date, dateStr: string, label: string }[] = []
 
     switch (timeRange) {
       case "week":
         startDate.setDate(now.getDate() - 7)
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date()
+          date.setDate(date.getDate() - i)
+          timePoints.push({
+            date,
+            dateStr: date.toISOString().split("T")[0],
+            label: date.toLocaleDateString("en-US", { weekday: "short" }),
+          })
+        }
         break
       case "month":
         startDate.setMonth(now.getMonth() - 1)
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth(), 0).getDate()
+        for (let i = daysInMonth - 1; i >= 0; i--) {
+          const date = new Date()
+          date.setDate(date.getDate() - i)
+          timePoints.push({
+            date,
+            dateStr: date.toISOString().split("T")[0],
+            label: `${date.getMonth() + 1}/${date.getDate()}`,
+          })
+        }
         break
       case "year":
         startDate.setFullYear(now.getFullYear() - 1)
+        timeUnit = 'month'
+        for (let i = 11; i >= 0; i--) {
+          const date = new Date()
+          date.setMonth(date.getMonth() - i)
+          timePoints.push({
+            date,
+            dateStr: date.toISOString().split("T")[0].substring(0, 7), // YYYY-MM
+            label: date.toLocaleDateString("en-US", { month: "short" }),
+          })
+        }
         break
     }
 
     // Task completion analytics
-    const completedTasks = tasks.filter((task) => task.completed)
-    const taskCompletionRate = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0
+    const filteredTasks = tasks.filter(task => new Date(task.createdAt) >= startDate)
+    const completedTasks = filteredTasks.filter((task) => task.completed)
+    const taskCompletionRate = filteredTasks.length > 0 ? (completedTasks.length / filteredTasks.length) * 100 : 0
 
     // Habit streak analytics
     const habitStreaks = habits.map((habit) => ({
@@ -74,26 +106,28 @@ export function Analytics({ tasks, habits, goals, journals, events, achievements
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
-    // Daily productivity score
-    const productivityData = []
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date()
-      date.setDate(date.getDate() - i)
-      const dateStr = date.toISOString().split("T")[0]
-
-      const dayTasks = tasks.filter((task) => task.createdAt?.startsWith(dateStr))
-      const dayHabits = habits.filter((habit) => habit.completedDates?.includes(dateStr))
-      const dayJournals = journals.filter((journal) => journal.date === dateStr)
+    // Daily/Monthly productivity score
+    const productivityData = timePoints.map(point => {
+      let dayTasks, dayHabits, dayJournals
+      if (timeUnit === 'day') {
+        dayTasks = tasks.filter((task) => task.createdAt?.startsWith(point.dateStr))
+        dayHabits = habits.filter((habit) => habit.completedDates?.includes(point.dateStr))
+        dayJournals = journals.filter((journal) => journal.date === point.dateStr)
+      } else { // month
+        dayTasks = tasks.filter((task) => task.createdAt?.startsWith(point.dateStr))
+        dayHabits = habits.filter((habit) => habit.completedDates?.some(d => d.startsWith(point.dateStr)))
+        dayJournals = journals.filter((journal) => journal.date.startsWith(point.dateStr))
+      }
 
       const score = Math.min(100, dayTasks.length * 10 + dayHabits.length * 15 + dayJournals.length * 5)
 
-      productivityData.push({
-        date: date.toLocaleDateString("en-US", { weekday: "short" }),
+      return {
+        date: point.label,
         score,
         tasks: dayTasks.length,
         habits: dayHabits.length,
-      })
-    }
+      }
+    })
 
     return {
       taskCompletionRate,
@@ -101,7 +135,7 @@ export function Analytics({ tasks, habits, goals, journals, events, achievements
       goalProgress,
       moodData,
       productivityData,
-      totalTasks: tasks.length,
+      totalTasks: filteredTasks.length,
       completedTasks: completedTasks.length,
       totalHabits: habits.length,
       totalGoals: goals.length,

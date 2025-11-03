@@ -280,7 +280,7 @@ export function Notebook({ notes, setNotes }: NotebookProps) {
   }
 
   const quillFormats = [
-    "header", "bold", "italic", "underline", "strike", "color", "background",
+    "header", "bold", "italic", "underline", "strike",
     "list", "bullet", "indent", "align", "link", "image", "video",
     "blockquote", "code-block",
   ]

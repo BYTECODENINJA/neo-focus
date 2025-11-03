@@ -150,7 +150,7 @@ export function Tasks({ tasks, setTasks }: TasksProps) {
 
       {/* Filter Tabs */}
       <div className="flex gap-2 mb-6">
-        {(["all", "pending", "completed"] as const).map((filterType) => (
+        {(['all', 'pending', 'completed'] as const).map((filterType) => (
           <button
             key={filterType}
             onClick={() => setFilter(filterType)}

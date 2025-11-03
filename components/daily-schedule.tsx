@@ -28,16 +28,6 @@ const eventColors = [
 const TIMELINE_HEIGHT = 24 * 64 // 24 hours * 64px/hour (h-16)
 
 // Common timezones
-const timezones = [
-  { name: "UTC (GMT)", value: "UTC" },
-  { name: "Eastern Time (ET)", value: "America/New_York" },
-  { name: "Central Time (CT)", value: "America/Chicago" },
-  { name: "Mountain Time (MT)", value: "America/Denver" },
-  { name: "Pacific Time (PT)", value: "America/Los_Angeles" },
-  { name: "London (GMT)", value: "Europe/London" },
-  { name: "Paris (CET)", value: "Europe/Paris" },
-  { name: "Tokyo (JST)", value: "Asia/Tokyo" },
-]
 
 export function DailySchedule() {
   const [events, setEvents] = useState<ScheduleEvent[]>([])
@@ -319,24 +309,6 @@ export function DailySchedule() {
               />
             </div>
 
-            <div>
-              <label className="text-sm font-medium mb-2 block">Timezone</label>
-              <Select
-                value={selectedTimezone}
-                onValueChange={(value) => setSelectedTimezone(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {timezones.map((timezone) => (
-                    <SelectItem key={timezone.value} value={timezone.value}>
-                      {timezone.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
             {isEditing && (
               <>

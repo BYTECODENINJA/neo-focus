@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Bell, Clock, Calendar, Trash2, ToggleLeft, ToggleRight } from "lucide-react"
+import { Plus, Bell, Clock, Calendar, Trash2, ToggleLeft, ToggleRight, VolumeX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useNotifications } from "@/contexts/notification-context"
 
@@ -24,6 +24,8 @@ export function Reminders({ reminders, setReminders }: RemindersProps) {
     date: "", // For one-time reminders
     isOneTime: false, // Flag for one-time reminder
   })
+  const [ringingReminder, setRingingReminder] = useState<string | null>(null)
+  const [alarmAudio, setAlarmAudio] = useState<HTMLAudioElement | null>(null)
 
   const { showNotification } = useNotifications()
 
@@ -37,10 +39,11 @@ export function Reminders({ reminders, setReminders }: RemindersProps) {
     { value: "custom", label: "Custom", icon: "🔔" },
   ]
 
-  // Check for due reminders every minute
+  // Check for due reminders
   useEffect(() => {
-    // Check reminders immediately when component mounts
     const checkReminders = () => {
+      if (ringingReminder) return; // Don't check for new reminders if one is already ringing
+
       const now = new Date()
       const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`
       const currentDay = now.getDay()
@@ -48,56 +51,59 @@ export function Reminders({ reminders, setReminders }: RemindersProps) {
 
       reminders.forEach((reminder: any) => {
         if (!reminder.enabled) return
-        
-        // Check one-time reminders
-        if (reminder.isOneTime && reminder.date) {
-          if (reminder.time === currentTime && reminder.date === currentDate) {
-            // Play sound when reminder is triggered
-            const audio = new Audio('/notification-sound.mp3');
-            audio.play().catch(err => console.error("Error playing notification sound:", err));
-            
-            // Show notification
-            showNotification(reminder.title, reminder.message)
-            
-            // Fallback notification using alert if permissions not granted
-            if (typeof window !== "undefined" && "Notification" in window && Notification.permission !== "granted") {
-              alert(`Reminder: ${reminder.title}\n${reminder.message}`);
-            }
-            
-            // Disable the one-time reminder after showing
+
+        const isDue = (reminder.isOneTime && reminder.date === currentDate && reminder.time === currentTime) || 
+                      (!reminder.isOneTime && reminder.time === currentTime && (reminder.days.length === 0 || reminder.days.includes(currentDay)))
+
+        if (isDue) {
+          setRingingReminder(reminder.id)
+          showNotification(reminder.title, reminder.message)
+          
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission !== "granted") {
+            alert(`Reminder: ${reminder.title}\n${reminder.message}`);
+          }
+
+          if (reminder.isOneTime) {
             setReminders(prevReminders => 
               prevReminders.map(r => r.id === reminder.id ? { ...r, enabled: false } : r)
             )
-          }
-          return
-        }
-        
-        // Check recurring reminders
-        if (
-          reminder.time === currentTime &&
-          (reminder.days.length === 0 || reminder.days.includes(currentDay))
-        ) {
-          // Play sound when reminder is triggered
-          const audio = new Audio('/notification-sound.mp3');
-          audio.play().catch(err => console.error("Error playing notification sound:", err));
-          
-          // Show notification
-          showNotification(reminder.title, reminder.message)
-          
-          // Fallback notification using alert if permissions not granted
-          if (typeof window !== "undefined" && "Notification" in window && Notification.permission !== "granted") {
-            alert(`Reminder: ${reminder.title}\n${reminder.message}`);
           }
         }
       })
     }
 
-    // Check immediately on mount and when reminders change
-    checkReminders();
-    
-    const interval = setInterval(checkReminders, 10000); // Check every 10 seconds instead of 60 seconds
+    const interval = setInterval(checkReminders, 5000)
     return () => clearInterval(interval)
-  }, [reminders, showNotification])
+  }, [reminders, showNotification, ringingReminder])
+
+  // Handle alarm sound
+  useEffect(() => {
+    if (ringingReminder) {
+      const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT")
+      audio.loop = true
+      audio.play().catch(err => console.error("Error playing alarm:", err))
+      setAlarmAudio(audio)
+
+      const timer = setTimeout(() => {
+        stopAlarm()
+      }, 60000) // 1 minute
+
+      return () => {
+        clearTimeout(timer)
+        if (audio) {
+          audio.pause()
+        }
+      }
+    }
+  }, [ringingReminder])
+  
+  const stopAlarm = () => {
+    if (alarmAudio) {
+      alarmAudio.pause()
+    }
+    setRingingReminder(null)
+    setAlarmAudio(null)
+  }
 
   const addReminder = () => {
     if (newReminder.title && newReminder.time) {
@@ -163,9 +169,33 @@ export function Reminders({ reminders, setReminders }: RemindersProps) {
           Add Reminder
         </Button>
       </motion.div>
+      
+      {/* Ringing Alarm UI */}
+      <AnimatePresence>
+        {ringingReminder && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mb-4 bg-red-500/20 border border-red-500/50 rounded-2xl p-4 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <Bell size={24} className="text-red-400 animate-shake" />
+              <div>
+                <h3 className="font-bold text-lg">Reminder</h3>
+                <p className="text-white/80">A reminder is going off!</p>
+              </div>
+            </div>
+            <Button onClick={stopAlarm} variant="destructive" size="sm">
+              <VolumeX size={16} className="mr-2" />
+              Stop Alarm
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Reminders List */}
-      <div className="space-y-4 flex-1 overflow-y-auto pr-2 max-h-[calc(100vh-200px)]">
+      <div className="space-y-4 flex-1 overflow-y-auto pr-2 max-h-[calc(100vh-250px)]">
         <AnimatePresence>
           {reminders.map((reminder, index) => {
             const typeInfo = getReminderTypeInfo(reminder.type)

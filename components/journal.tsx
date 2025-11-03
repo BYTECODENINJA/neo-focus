@@ -86,6 +86,7 @@ const highlightColors = [
 export function Journal({ journals, setJournals }: JournalProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedMood, setSelectedMood] = useState<string>("all")
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null)
@@ -117,9 +118,10 @@ export function Journal({ journals, setJournals }: JournalProps) {
         journal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         journal.content.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesMood = selectedMood === "all" || journal.mood === selectedMood
-      return matchesSearch && matchesMood
+      const matchesDate = !selectedDate || journal.date === selectedDate
+      return matchesSearch && matchesMood && matchesDate
     })
-  }, [journals, searchTerm, selectedMood])
+  }, [journals, searchTerm, selectedMood, selectedDate])
 
   const handleCreateEntry = useCallback(() => {
     setFormData({
@@ -293,6 +295,24 @@ export function Journal({ journals, setJournals }: JournalProps) {
             <SelectItem value="difficult">😢 Difficult</SelectItem>
           </SelectContent>
         </Select>
+        <div className="relative">
+          <Input
+            type="date"
+            value={selectedDate || ""}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="bg-white/10 border-white/20 text-white"
+          />
+          {selectedDate && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2"
+              onClick={() => setSelectedDate(null)}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Journal Entries */}
@@ -331,6 +351,13 @@ export function Journal({ journals, setJournals }: JournalProps) {
                         <div className="text-sm">
                           <span className="text-green-400 font-medium">Gratitude: </span>
                           <span className="text-white/70">{journal.gratitude}</span>
+                        </div>
+                      )}
+                      
+                      {journal.reflection && (
+                        <div className="text-sm">
+                          <span className="text-blue-400 font-medium">Reflection: </span>
+                          <span className="text-white/70">{journal.reflection}</span>
                         </div>
                       )}
 
