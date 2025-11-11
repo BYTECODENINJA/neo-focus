@@ -1,10 +1,28 @@
-"use client"
+'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Bell, Clock, Calendar, Trash2, ToggleLeft, ToggleRight, VolumeX } from "lucide-react"
+import {
+  Plus,
+  Bell,
+  Clock,
+  Calendar,
+  Trash2,
+  Edit,
+  Save,
+  X,
+  Snooze,
+  VolumeX,
+  Check,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useNotifications } from "@/contexts/notification-context"
+import { toast } from "sonner"
 
 import { Reminder } from "@/types"
 
@@ -13,147 +31,211 @@ interface RemindersProps {
   setReminders: (reminders: Reminder[]) => void
 }
 
+const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+const reminderTypes = [
+  { value: "general", label: "General", icon: "📋" },
+  { value: "task", label: "Task", icon: "✅" },
+  { value: "habit", label: "Habit", icon: "🎯" },
+  { value: "break", label: "Break", icon: "☕" },
+  { value: "hydration", label: "Hydration", icon: "💧" },
+  { value: "custom", label: "Custom", icon: "🔔" },
+]
+
+const initialFormState: Partial<Reminder> = {
+  title: "",
+  message: "",
+  type: "general",
+  time: "",
+  scheduleType: "daily",
+  days: [],
+  date: "",
+  enabled: true,
+}
+
 export function Reminders({ reminders, setReminders }: RemindersProps) {
-  const [showAddReminder, setShowAddReminder] = useState(false)
-  const [newReminder, setNewReminder] = useState({
-    title: "",
-    message: "",
-    type: "general" as const,
-    time: "",
-    days: [] as number[],
-    date: "", // For one-time reminders
-    isOneTime: false, // Flag for one-time reminder
-  })
-  const [ringingReminder, setRingingReminder] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingReminder, setEditingReminder] = useState<Partial<Reminder> | null>(null)
+  const [ringingReminder, setRingingReminder] = useState<Reminder | null>(null)
   const [alarmAudio, setAlarmAudio] = useState<HTMLAudioElement | null>(null)
 
-  const { showNotification } = useNotifications()
+  const { showNotification, requestNotificationPermission } = useNotifications()
 
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-  const reminderTypes = [
-    { value: "general", label: "General", icon: "📋" },
-    { value: "task", label: "Task", icon: "✅" },
-    { value: "habit", label: "Habit", icon: "🎯" },
-    { value: "break", label: "Break", icon: "☕" },
-    { value: "hydration", label: "Hydration", icon: "💧" },
-    { value: "custom", label: "Custom", icon: "🔔" },
-  ]
+  useEffect(() => {
+    requestNotificationPermission()
+  }, [requestNotificationPermission])
 
-  // Check for due reminders
+  const playAlarm = useCallback((reminder: Reminder) => {
+    setRingingReminder(reminder)
+    const audio = new Audio('/alarm.mp3')
+    audio.loop = true
+    audio.play().catch(err => console.error("Error playing alarm:", err))
+    setAlarmAudio(audio)
+
+    const notificationId = toast.info(reminder.title, {
+      description: reminder.message,
+      duration: 60000, // 1 minute
+      icon: <Bell className="animate-shake" />,
+      action: {
+        label: "Snooze (5m)",
+        onClick: () => {
+          snoozeReminder(reminder.id)
+          toast.dismiss(notificationId)
+        },
+      },
+      onDismiss: () => stopAlarm(),
+    })
+  }, [showNotification])
+
+  const stopAlarm = useCallback(() => {
+    if (alarmAudio) {
+      alarmAudio.pause()
+      setAlarmAudio(null)
+    }
+    setRingingReminder(null)
+  }, [alarmAudio])
+
+  const snoozeReminder = (reminderId: string) => {
+    stopAlarm()
+    const reminder = reminders.find(r => r.id === reminderId)
+    if (!reminder) return
+
+    const snoozeTime = new Date(Date.now() + 5 * 60000) // 5 minutes from now
+    const snoozedReminder: Reminder = {
+      ...reminder,
+      scheduleType: "one-time",
+      date: snoozeTime.toISOString().split('T')[0],
+      time: `${snoozeTime.getHours().toString().padStart(2, '0')}:${snoozeTime.getMinutes().toString().padStart(2, '0')}`,
+      isSnoozed: true, // Custom flag to indicate this is a snoozed instance
+    }
+
+    // Instead of modifying the original, we add a temporary reminder
+    // This is a simplified approach. A more robust solution might involve a separate snooze queue.
+    setReminders([...reminders, snoozedReminder])
+    toast.info(`"${reminder.title}" snoozed for 5 minutes.`)
+  }
+
   useEffect(() => {
     const checkReminders = () => {
-      if (ringingReminder) return; // Don't check for new reminders if one is already ringing
-
       const now = new Date()
-      const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`
-      const currentDay = now.getDay()
-      const currentDate = now.toISOString().split('T')[0]
+      reminders.forEach((reminder) => {
+        if (!reminder.enabled || ringingReminder?.id === reminder.id) return
 
-      reminders.forEach((reminder: any) => {
-        if (!reminder.enabled) return
+        const [hours, minutes] = reminder.time.split(':').map(Number)
+        const reminderTime = new Date()
+        reminderTime.setHours(hours, minutes, 0, 0)
 
-        const isDue = (reminder.isOneTime && reminder.date === currentDate && reminder.time === currentTime) || 
-                      (!reminder.isOneTime && reminder.time === currentTime && (reminder.days.length === 0 || reminder.days.includes(currentDay)))
-
-        if (isDue) {
-          setRingingReminder(reminder.id)
-          showNotification(reminder.title, reminder.message)
-          
-          if (typeof window !== "undefined" && "Notification" in window && Notification.permission !== "granted") {
-            alert(`Reminder: ${reminder.title}\n${reminder.message}`);
+        let shouldRing = false
+        if (reminder.scheduleType === "one-time") {
+          const reminderDate = new Date(reminder.date!)
+          if (reminderDate.getFullYear() === now.getFullYear() &&
+              reminderDate.getMonth() === now.getMonth() &&
+              reminderDate.getDate() === now.getDate() &&
+              reminderTime.getTime() <= now.getTime() &&
+              now.getTime() - reminderTime.getTime() < 60000) { // Ring within a 1-minute window
+            shouldRing = true
           }
+        } else { // Recurring
+          const today = now.getDay()
+          if ((!reminder.days || reminder.days.length === 0 || reminder.days.includes(today))) {
+             if (reminderTime.getHours() === now.getHours() && reminderTime.getMinutes() === now.getMinutes()) {
+                shouldRing = true;
+             }
+          }
+        }
 
-          if (reminder.isOneTime) {
-            setReminders(prevReminders => 
-              prevReminders.map(r => r.id === reminder.id ? { ...r, enabled: false } : r)
-            )
+        if (shouldRing) {
+          playAlarm(reminder)
+          // If it's a one-time reminder (and not a snoozed one), disable it after it rings
+          if (reminder.scheduleType === 'one-time' && !reminder.isSnoozed) {
+            setReminders(reminders.map(r => r.id === reminder.id ? { ...r, enabled: false } : r))
+          } else if (reminder.isSnoozed) {
+            // Remove the temporary snoozed reminder after it rings
+            setReminders(reminders.filter(r => r.id !== reminder.id));
           }
         }
       })
     }
 
-    const interval = setInterval(checkReminders, 5000)
-    return () => clearInterval(interval)
-  }, [reminders, showNotification, ringingReminder])
-
-  // Handle alarm sound
-  useEffect(() => {
-    if (ringingReminder) {
-      const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT")
-      audio.loop = true
-      audio.play().catch(err => console.error("Error playing alarm:", err))
-      setAlarmAudio(audio)
-
-      const timer = setTimeout(() => {
-        stopAlarm()
-      }, 60000) // 1 minute
-
-      return () => {
-        clearTimeout(timer)
-        if (audio) {
-          audio.pause()
-        }
-      }
-    }
-  }, [ringingReminder])
+    const intervalId = setInterval(checkReminders, 1000 * 10) // Check every 10 seconds
+    return () => clearInterval(intervalId)
+  }, [reminders, ringingReminder, playAlarm, setReminders])
   
-  const stopAlarm = () => {
-    if (alarmAudio) {
-      alarmAudio.pause()
+
+  const handleOpenModal = (reminder: Partial<Reminder> | null = null) => {
+    if (reminder) {
+      setEditingReminder({ ...reminder })
+    } else {
+      const now = new Date()
+      const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`
+      setEditingReminder({ ...initialFormState, time: currentTime, date: new Date().toISOString().split('T')[0] })
     }
-    setRingingReminder(null)
-    setAlarmAudio(null)
+    setIsModalOpen(true)
   }
 
-  const addReminder = () => {
-    if (newReminder.title && newReminder.time) {
-      const reminder: Reminder = {
-        id: Date.now().toString(),
-        title: newReminder.title,
-        message: newReminder.message,
-        type: newReminder.type,
-        time: newReminder.time,
-        days: newReminder.days,
-        enabled: true,
-        created_at: new Date().toISOString(),
-        isOneTime: newReminder.isOneTime || false,
-        date: newReminder.date || "",
-      } as any
-      setReminders([reminder, ...reminders])
-      setNewReminder({ title: "", message: "", type: "general", time: "", days: [], date: "", isOneTime: false })
-      setShowAddReminder(false)
+  const handleSaveReminder = () => {
+    if (!editingReminder || !editingReminder.title || !editingReminder.time) {
+      toast.error("Title and time are required.")
+      return
     }
+
+    if (editingReminder.scheduleType === "one-time" && !editingReminder.date) {
+      toast.error("Please select a date for the one-time reminder.")
+      return
+    }
+
+    let updatedReminders: Reminder[]
+
+    if (editingReminder.id) {
+      updatedReminders = reminders.map((r) =>
+        r.id === editingReminder.id ? (editingReminder as Reminder) : r,
+      )
+      toast.success("Reminder updated successfully!")
+    } else {
+      const newReminder: Reminder = {
+        ...initialFormState,
+        ...editingReminder,
+        id: Date.now().toString(),
+        created_at: new Date().toISOString(),
+      } as Reminder
+      updatedReminders = [newReminder, ...reminders]
+      toast.success("Reminder added successfully!")
+    }
+
+    setReminders(updatedReminders.sort((a, b) => a.time.localeCompare(b.time)))
+    setIsModalOpen(false)
+    setEditingReminder(null)
   }
 
   const toggleReminder = (reminderId: string) => {
     setReminders(
-      reminders.map((reminder) =>
-        reminder.id === reminderId ? { ...reminder, enabled: !reminder.enabled } : reminder,
-      ),
+      reminders.map((r) => (r.id === reminderId ? { ...r, enabled: !r.enabled } : r)),
     )
   }
 
   const deleteReminder = (reminderId: string) => {
-    setReminders(reminders.filter((reminder) => reminder.id !== reminderId))
-  }
-
-  const getReminderTypeInfo = (type: string) => {
-    return reminderTypes.find((t) => t.value === type) || reminderTypes[0]
+    setReminders(reminders.filter((r) => r.id !== reminderId))
+    toast.success("Reminder deleted.")
   }
 
   const getScheduleText = (reminder: Reminder) => {
-    const days = reminder.days || [];
-    if (days.length === 0) {
-      return "Daily"
-    } else if (days.length === 7) {
-      return "Every day"
-    } else if (days.length === 5 && days.every((d) => d >= 1 && d <= 5)) {
-      return "Weekdays"
-    } else if (days.length === 2 && days.includes(0) && days.includes(6)) {
-      return "Weekends"
-    } else {
-      return days.map((d) => dayNames[d]).join(", ")
+    if (reminder.isSnoozed) return "Snoozed"
+    if (reminder.scheduleType === "one-time") {
+        if (!reminder.date) return "One-time";
+        const date = new Date(reminder.date);
+        const timezoneOffset = date.getTimezoneOffset() * 60000;
+        const adjustedDate = new Date(date.getTime() + timezoneOffset);
+        return `One-time on ${adjustedDate.toLocaleDateString()}`;
     }
+    if (reminder.scheduleType === "daily" || !reminder.days || reminder.days.length === 0) {
+        return "Daily";
+    }
+    if (reminder.days.length === 7) return "Every day";
+    if (reminder.days.length === 5 && reminder.days.every((d) => d >= 1 && d <= 5)) return "Weekdays";
+    if (reminder.days.length === 2 && reminder.days.includes(0) && reminder.days.includes(6)) return "Weekends";
+    return reminder.days
+      .sort()
+      .map((d) => dayNames[d])
+      .join(", ");
   }
 
   return (
@@ -164,13 +246,12 @@ export function Reminders({ reminders, setReminders }: RemindersProps) {
         className="flex items-center justify-between mb-8"
       >
         <h1 className="text-4xl font-bold">Reminders</h1>
-        <Button onClick={() => setShowAddReminder(true)} className="bg-gradient-to-r from-purple-500 to-blue-500">
+        <Button onClick={() => handleOpenModal()} className="bg-gradient-to-r from-purple-500 to-blue-500">
           <Plus size={20} className="mr-2" />
           Add Reminder
         </Button>
       </motion.div>
-      
-      {/* Ringing Alarm UI */}
+
       <AnimatePresence>
         {ringingReminder && (
           <motion.div
@@ -182,195 +263,145 @@ export function Reminders({ reminders, setReminders }: RemindersProps) {
             <div className="flex items-center gap-3">
               <Bell size={24} className="text-red-400 animate-shake" />
               <div>
-                <h3 className="font-bold text-lg">Reminder</h3>
-                <p className="text-white/80">A reminder is going off!</p>
+                <h3 className="font-bold text-lg">{ringingReminder.title}</h3>
+                <p className="text-white/80">{ringingReminder.message}</p>
               </div>
             </div>
-            <Button onClick={stopAlarm} variant="destructive" size="sm">
-              <VolumeX size={16} className="mr-2" />
-              Stop Alarm
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => snoozeReminder(ringingReminder.id)} variant="outline" size="sm">
+                <Snooze size={16} className="mr-2" />
+                Snooze
+              </Button>
+              <Button onClick={stopAlarm} variant="destructive" size="sm">
+                <VolumeX size={16} className="mr-2" />
+                Dismiss
+              </Button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Reminders List */}
-      <div className="space-y-4 flex-1 overflow-y-auto pr-2 max-h-[calc(100vh-250px)]">
-        <AnimatePresence>
-          {reminders.map((reminder, index) => {
-            const typeInfo = getReminderTypeInfo(reminder.type)
-
-            return (
+      {reminders.length === 0 && !ringingReminder ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Bell size={48} className="mx-auto mb-4 text-white/40" />
+            <h3 className="text-xl font-bold mb-2">No reminders yet</h3>
+            <p className="text-white/60 mb-4">Click "Add Reminder" to get started.</p>
+          </div>
+        </div>
+      ) : (
+        <ScrollArea className="flex-1 -mr-4 pr-4">
+          <AnimatePresence>
+            {reminders.map((reminder) => (
               <motion.div
                 key={reminder.id}
+                layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ delay: index * 0.05 }}
-                className={`bg-black/20 dark:bg-gray-800/50 backdrop-blur-lg rounded-2xl border border-white/10 dark:border-gray-700/50 p-6 ${
-                  !reminder.enabled ? "opacity-60" : ""
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">{typeInfo.icon}</span>
-                      <h3 className="text-lg font-bold">{reminder.title}</h3>
-                      <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full">
-                        {typeInfo.label}
-                      </span>
-                    </div>
-
-                    {reminder.message && (
-                      <p className="text-white/60 dark:text-gray-400 text-sm mb-3">{reminder.message}</p>
-                    )}
-
-                    <div className="flex items-center gap-4 text-sm text-white/60 dark:text-gray-400">
-                      <div className="flex items-center gap-1">
-                        <Clock size={14} />
-                        <span>{reminder.time}</span>
+                exit={{ opacity: 0, scale: 0.95 }}
+                className={`mb-4 rounded-2xl border transition-all duration-300 ${!reminder.enabled ? "bg-black/10 border-white/5" : "bg-black/20 border-white/10"} ${reminder.isSnoozed ? 'border-blue-500/50' : ''}`}>
+                <div className={`p-5 ${!reminder.enabled ? "opacity-50" : ""}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">{reminderTypes.find(t => t.value === reminder.type)?.icon}</span>
+                        <h3 className="text-lg font-bold">{reminder.title}</h3>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar size={14} />
-                        <span>{getScheduleText(reminder)}</span>
+                      <p className="text-white/70 text-sm mb-3">{reminder.message}</p>
+                      <div className="flex items-center gap-4 text-sm text-white/60">
+                        <div className="flex items-center gap-1.5"><Clock size={14} /><span>{reminder.time}</span></div>
+                        <div className="flex items-center gap-1.5"><Calendar size={14} /><span>{getScheduleText(reminder)}</span></div>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button onClick={() => toggleReminder(reminder.id)} variant="ghost" size="sm" className="p-2">
-                      {reminder.enabled ? (
-                        <ToggleRight size={20} className="text-green-400" />
-                      ) : (
-                        <ToggleLeft size={20} className="text-gray-400" />
-                      )}
-                    </Button>
-                    <Button
-                      onClick={() => deleteReminder(reminder.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="p-2 text-red-400 hover:text-red-300"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button onClick={() => toggleReminder(reminder.id)} variant="ghost" size="icon" className="w-8 h-8">
+                         <Check size={20} className={`transition-colors ${reminder.enabled ? "text-green-400" : "text-gray-500"}`} />
+                      </Button>
+                      <Button onClick={() => handleOpenModal(reminder)} variant="ghost" size="icon" className="w-8 h-8">
+                        <Edit size={16} />
+                      </Button>
+                      <Button onClick={() => deleteReminder(reminder.id)} variant="ghost" size="icon" className="w-8 h-8 text-red-400 hover:text-red-300">
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
-            )
-          })}
-        </AnimatePresence>
+            ))}
+          </AnimatePresence>
+        </ScrollArea>
+      )}
 
-        {reminders.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-black/20 dark:bg-gray-800/50 backdrop-blur-lg rounded-2xl border border-white/10 dark:border-gray-700/50 p-12 text-center"
-          >
-            <Bell size={48} className="mx-auto mb-4 text-white/40" />
-            <h3 className="text-xl font-bold mb-2">No reminders set</h3>
-            <p className="text-white/60 dark:text-gray-400 mb-4">
-              Create reminders to stay on top of your tasks and habits
-            </p>
-            <Button onClick={() => setShowAddReminder(true)} className="bg-gradient-to-r from-purple-500 to-blue-500">
-              <Plus size={16} className="mr-2" />
-              Add Your First Reminder
-            </Button>
-          </motion.div>
-        )}
-      </div>
-
-      {/* Add Reminder Modal */}
-      <AnimatePresence>
-        {showAddReminder && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gradient-to-br from-purple-900 to-indigo-900 dark:from-gray-800 dark:to-gray-900 p-6 rounded-2xl border border-white/20 dark:border-gray-700/50 w-96 max-h-[90vh] overflow-y-auto"
-            >
-              <h3 className="text-xl font-bold mb-4">Add New Reminder</h3>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Reminder title"
-                  value={newReminder.title}
-                  onChange={(e) => setNewReminder({ ...newReminder, title: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-black/20 dark:bg-gray-700/50 border border-white/10 dark:border-gray-600/50 text-white placeholder-white/50 dark:placeholder-gray-400"
-                />
-
-                <textarea
-                  placeholder="Message (optional)"
-                  value={newReminder.message}
-                  onChange={(e) => setNewReminder({ ...newReminder, message: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-black/20 dark:bg-gray-700/50 border border-white/10 dark:border-gray-600/50 text-white placeholder-white/50 dark:placeholder-gray-400 h-20 resize-none"
-                />
-
-                <select
-                  value={newReminder.type}
-                  onChange={(e) => setNewReminder({ ...newReminder, type: e.target.value as any })}
-                  className="w-full p-3 rounded-xl bg-black/20 dark:bg-gray-700/50 border border-white/10 dark:border-gray-600/50 text-white"
-                >
-                  {reminderTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.icon} {type.label}
-                    </option>
-                  ))}
-                </select>
-
-                <input
-                  type="time"
-                  value={newReminder.time}
-                  onChange={(e) => setNewReminder({ ...newReminder, time: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-black/20 dark:bg-gray-700/50 border border-white/10 dark:border-gray-600/50 text-white"
-                />
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="oneTime"
-                    checked={newReminder.isOneTime}
-                    onChange={(e) => setNewReminder({ ...newReminder, isOneTime: e.target.checked, days: [] })}
-                    className="w-4 h-4 rounded"
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="bg-gray-900/95 backdrop-blur-lg border-white/20 text-white">
+          <DialogHeader>
+            <DialogTitle>{editingReminder?.id ? "Edit Reminder" : "Add New Reminder"}</DialogTitle>
+          </DialogHeader>
+          {editingReminder && (
+            <div className="space-y-4 pt-4">
+              <Input
+                placeholder="Reminder title"
+                value={editingReminder.title}
+                onChange={(e) => setEditingReminder({ ...editingReminder, title: e.target.value })}
+                className="bg-white/10 border-white/20"
+              />
+              <Textarea
+                placeholder="Message (optional)"
+                value={editingReminder.message}
+                onChange={(e) => setEditingReminder({ ...editingReminder, message: e.target.value })}
+                className="bg-white/10 border-white/20 resize-none"
+                rows={3}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                 <Select value={editingReminder.type} onValueChange={(type) => setEditingReminder({ ...editingReminder, type: type as any })}>
+                    <SelectTrigger className="bg-white/10 border-white/20"><SelectValue/></SelectTrigger>
+                    <SelectContent>
+                        {reminderTypes.map((t) => <SelectItem key={t.value} value={t.value}>{t.icon} {t.label}</SelectItem>)}
+                    </SelectContent>
+                 </Select>
+                 <Input
+                    type="time"
+                    value={editingReminder.time}
+                    onChange={(e) => setEditingReminder({ ...editingReminder, time: e.target.value })}
+                    className="bg-white/10 border-white/20"
                   />
-                  <label htmlFor="oneTime" className="text-sm text-white/80">
-                    One-time reminder
-                  </label>
+              </div>
+              
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Schedule</label>
+                <div className="flex gap-2 rounded-lg bg-black/20 p-1">
+                    <Button variant={editingReminder.scheduleType === 'daily' ? 'secondary' : 'ghost'} onClick={() => setEditingReminder({...editingReminder, scheduleType: 'daily', days: []})} className="flex-1">Recurring</Button>
+                    <Button variant={editingReminder.scheduleType === 'one-time' ? 'secondary' : 'ghost'} onClick={() => setEditingReminder({...editingReminder, scheduleType: 'one-time'})} className="flex-1">One-time</Button>
                 </div>
+              </div>
 
-                {newReminder.isOneTime && (
-                  <input
-                    type="date"
-                    value={newReminder.date}
-                    onChange={(e) => setNewReminder({ ...newReminder, date: e.target.value })}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full p-3 rounded-xl bg-black/20 dark:bg-gray-700/50 border border-white/10 dark:border-gray-600/50 text-white"
-                  />
-                )}
-
-                {!newReminder.isOneTime && (
+              {editingReminder.scheduleType === 'one-time' ? (
+                <Input
+                  type="date"
+                  value={editingReminder.date}
+                  onChange={(e) => setEditingReminder({ ...editingReminder, date: e.target.value })}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full bg-white/10 border-white/20"
+                />
+              ) : (
                 <div>
-                  <p className="text-sm text-white/60 dark:text-gray-400 mb-2">Repeat on (leave empty for daily):</p>
-                  <div className="flex gap-2 flex-wrap">
+                  <p className="text-sm text-white/60 mb-2">Repeat on (leave empty for daily):</p>
+                  <div className="flex justify-center gap-1.5 flex-wrap">
                     {dayNames.map((day, index) => (
                       <button
                         key={day}
                         type="button"
                         onClick={() => {
-                          const newDays = newReminder.days.includes(index)
-                            ? newReminder.days.filter((d) => d !== index)
-                            : [...newReminder.days, index]
-                          setNewReminder({ ...newReminder, days: newDays })
+                          const currentDays = editingReminder.days || []
+                          const newDays = currentDays.includes(index)
+                            ? currentDays.filter((d) => d !== index)
+                            : [...currentDays, index]
+                          setEditingReminder({ ...editingReminder, days: newDays })
                         }}
-                        className={`px-3 py-2 rounded-lg text-sm transition-all ${
-                          newReminder.days.includes(index)
+                        className={`w-10 h-10 rounded-lg text-sm transition-all flex items-center justify-center ${
+                          editingReminder.days?.includes(index)
                             ? "bg-purple-500 text-white"
-                            : "bg-white/10 dark:bg-gray-700/50 text-white/70 hover:bg-white/20"
+                            : "bg-white/10 text-white/70 hover:bg-white/20"
                         }`}
                       >
                         {day}
@@ -378,21 +409,19 @@ export function Reminders({ reminders, setReminders }: RemindersProps) {
                     ))}
                   </div>
                 </div>
-                )}
+              )}
 
-                <div className="flex gap-2">
-                  <Button onClick={addReminder} className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500">
-                    Add Reminder
-                  </Button>
-                  <Button onClick={() => setShowAddReminder(false)} variant="outline" className="flex-1">
-                    Cancel
-                  </Button>
-                </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                <Button onClick={handleSaveReminder} className="bg-gradient-to-r from-purple-500 to-blue-500">
+                  <Save size={16} className="mr-2" />
+                  {editingReminder.id ? "Save Changes" : "Add Reminder"}
+                </Button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1115,6 +1115,9 @@ video {
 .mt-auto {
   margin-top: auto;
 }
+.-mr-4 {
+  margin-right: -1rem;
+}
 .line-clamp-3 {
   overflow: hidden;
   display: -webkit-box;
@@ -1943,6 +1946,9 @@ video {
   --tw-border-opacity: 1;
   border-color: rgb(75 85 99 / var(--tw-border-opacity, 1));
 }
+.border-blue-500\/50 {
+  border-color: rgb(59 130 246 / 0.5);
+}
 .border-l-transparent {
   border-left-color: transparent;
 }
@@ -2279,6 +2285,9 @@ video {
 }
 .p-\[1px\] {
   padding: 1px;
+}
+.p-5 {
+  padding: 1.25rem;
 }
 .px-1 {
   padding-left: 0.25rem;

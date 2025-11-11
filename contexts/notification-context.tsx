@@ -1,59 +1,62 @@
-"use client"
+'use client'
 
-import { createContext, useContext, type ReactNode, useEffect } from "react"
+import { createContext, useContext, type ReactNode, useCallback } from "react"
+import { toast } from "sonner"
 
 interface NotificationContextType {
   showNotification: (title: string, message: string) => void
+  requestNotificationPermission: () => void
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    // Request notification permission on mount
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission().catch(console.error)
+  const requestNotificationPermission = useCallback(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                toast.success("Notifications enabled! You'll now receive reminders.");
+            }
+        }).catch(error => {
+            console.error("Error requesting notification permission:", error);
+            toast.error("An error occurred while enabling notifications.");
+        });
+      }
     }
-  }, [])
+  }, []);
 
   const showNotification = (title: string, message: string) => {
     try {
-      // Play notification sound
-      if (typeof window !== "undefined" && "Audio" in window) {
-        try {
-          const audio = new Audio('/notification-sound.mp3');
-          audio.play().catch(err => console.error("Error playing notification sound:", err));
-        } catch (error) {
-          console.error("Failed to play notification sound:", error);
-        }
-      }
-      
       // Web notification
       if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-        new Notification(title, {
+        const notification = new Notification(title, {
           body: message,
           icon: "/favicon.ico",
           badge: "/favicon.ico",
-          tag: "aura-focus",
-          requireInteraction: true, // Keep notification visible until user interacts with it
-          silent: false, // Allow system sound to play
-        })
-      } else {
-        // Fallback to console log for development
-        console.log(`Notification: ${title} - ${message}`)
+          tag: "aura-focus-reminder",
+          requireInteraction: false,
+          silent: true, 
+        });
         
-        // Fallback to alert if in browser and notifications not granted
-        if (typeof window !== "undefined" && "Notification" in window && Notification.permission !== "granted") {
-          alert(`${title}\n${message}`);
-        }
+        notification.onclick = () => {
+            window.focus();
+        };
+
+      } else {
+        // Fallback to toast if permissions are not granted
+        toast.info(title, { description: message });
       }
     } catch (error) {
       console.error("Failed to show notification:", error)
+      // Fallback for any other error
+      toast.error("Failed to show notification.");
     }
   }
 
   const value = {
     showNotification,
+    requestNotificationPermission,
   }
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>
