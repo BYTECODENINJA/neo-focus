@@ -286,7 +286,7 @@ export function Journal({ journals, setJournals }: JournalProps) {
       </Dialog>
 
       <Dialog open={!!viewingEntry} onOpenChange={() => setViewingEntry(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] bg-gray-900/95 backdrop-blur-lg border-white/20 text-white">
+        <DialogContent className="max-w-3xl max-h-[90vh] bg-gray-900/95 backdrop-blur-lg border-white/20 text-white flex flex-col">
           {viewingEntry && (
             <>
               <DialogHeader>
@@ -297,7 +297,7 @@ export function Journal({ journals, setJournals }: JournalProps) {
                     <div>Energy: {viewingEntry.energy}/10</div>
                 </div>
               </DialogHeader>
-              <ScrollArea className="max-h-[calc(80vh-150px)] pr-4">
+              <ScrollArea className="flex-1 -mx-6 px-6">
                 <div className="prose prose-invert max-w-none py-4">
                     {renderFormattedContent(viewingEntry.content, viewingEntry.formatting)}
                 </div>
@@ -314,7 +314,7 @@ export function Journal({ journals, setJournals }: JournalProps) {
                   </div>
                 )}
                 </ScrollArea>
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10 -mx-6 px-6 pb-0">
                 <Button variant="destructive" onClick={() => handleDeleteEntry(viewingEntry.id)}>Delete</Button>
                 <Button onClick={() => { setViewingEntry(null); handleEditEntry(viewingEntry); }}>Edit Entry</Button>
               </div>
