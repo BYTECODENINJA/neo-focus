@@ -44,18 +44,27 @@ export interface Habit {
 }
 
 // Goal interface
+export interface Milestone {
+    id: string;
+    name: string;
+    completed: boolean;
+}
+  
 export interface Goal {
-  id: string
-  title: string
-  description: string
-  type: "daily" | "weekly" | "monthly" | "yearly"
-  targetValue: number
-  currentValue: number
-  unit: string
-  category: "health" | "career" | "personal" | "finance" | "learning" | "other"
-  deadline: string
-  completed: boolean
-  createdAt: string
+    id: string;
+    title: string;
+    description: string;
+    type: "daily" | "weekly" | "monthly" | "yearly";
+    trackingMethod: "milestones" | "units" | "simple";
+    targetValue?: number;
+    currentValue?: number;
+    unit?: string;
+    milestones?: Milestone[];
+    category: "health" | "career" | "personal" | "finance" | "learning" | "other";
+    deadline: string;
+    completed: boolean;
+    createdAt: string;
+    lastReset?: string;
 }
 
 // Note interface

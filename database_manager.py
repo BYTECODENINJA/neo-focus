@@ -35,6 +35,19 @@ class DatabaseManager:
             )
         ''')
 
+        # Notes table for notebook
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS notes (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                content TEXT,
+                tags TEXT,
+                category TEXT,
+                createdAt TEXT NOT NULL,
+                updatedAt TEXT NOT NULL
+            )
+        ''')
+
         self.conn.commit()
 
     def add_task(self, title, category, startTime, endTime):
@@ -81,4 +94,26 @@ class DatabaseManager:
     def delete_calendar_event(self, event_id):
         cursor = self.conn.cursor()
         cursor.execute("DELETE FROM calendar_events WHERE id=?", (event_id,))
+        self.conn.commit()
+
+    def get_notes(self):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM notes ORDER BY updatedAt DESC")
+        return cursor.fetchall()
+
+    def add_note(self, note):
+        cursor = self.conn.cursor()
+        cursor.execute("INSERT INTO notes (id, title, content, tags, category, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                       (note['id'], note['title'], note['content'], ','.join(note['tags']), note['category'], note['createdAt'], note['updatedAt']))
+        self.conn.commit()
+
+    def update_note(self, note):
+        cursor = self.conn.cursor()
+        cursor.execute("UPDATE notes SET title=?, content=?, tags=?, category=?, updatedAt=? WHERE id=?",
+                       (note['title'], note['content'], ','.join(note['tags']), note['category'], note['updatedAt'], note['id']))
+        self.conn.commit()
+
+    def delete_note(self, note_id):
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM notes WHERE id=?", (note_id,))
         self.conn.commit()

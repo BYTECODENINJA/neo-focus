@@ -27,6 +27,7 @@ export default function Home() {
   const [activeSection, setActiveSection] = useState("calendar")
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null);
 
   // Sample data states
   const [events, setEvents] = useState<Event[]>([])
@@ -72,6 +73,7 @@ export default function Home() {
         }
       } catch (error) {
         console.error("Error loading data:", error)
+        setError(error as Error);
       } finally {
         setIsLoading(false)
       }
@@ -141,6 +143,48 @@ export default function Home() {
     }
   }, [autoSave])
 
+  const handleSaveScheduleEvent = async (eventToSave: ScheduleItem) => {
+    const eventsOnSameDay = schedule.filter(
+      (event) =>
+        event.date === eventToSave.date &&
+        event.id !== eventToSave.id &&
+        event.eventType === "schedule"
+    );
+  
+    const newStartTime = new Date(`${eventToSave.date}T${eventToSave.startTime}`).getTime();
+    const newEndTime = new Date(`${eventToSave.date}T${eventToSave.endTime}`).getTime();
+  
+    for (const existingEvent of eventsOnSameDay) {
+      if (existingEvent.startTime && existingEvent.endTime) {
+        const existingStartTime = new Date(
+          `${existingEvent.date}T${existingEvent.startTime}`
+        ).getTime();
+        const existingEndTime = new Date(
+          `${existingEvent.date}T${existingEvent.endTime}`
+        ).getTime();
+  
+        if (newStartTime < existingEndTime && newEndTime > existingStartTime) {
+          throw new Error(`Time conflict with event: "${existingEvent.title}"`);
+        }
+      }
+    }
+  
+    setSchedule((prevSchedule) => {
+      const eventIndex = prevSchedule.findIndex((e) => e.id === eventToSave.id);
+      if (eventIndex !== -1) {
+        const updatedSchedule = [...prevSchedule];
+        updatedSchedule[eventIndex] = eventToSave;
+        return updatedSchedule;
+      } else {
+        return [...prevSchedule, eventToSave];
+      }
+    });
+  };
+  
+  const handleDeleteScheduleEvent = async (eventId: string) => {
+    setSchedule((prevSchedule) => prevSchedule.filter((e) => e.id !== eventId));
+  };
+
   // Memoized render function to prevent unnecessary re-renders
   const renderActiveSection = useMemo(() => {
     const sectionProps = {
@@ -193,7 +237,13 @@ export default function Home() {
       case "schedule":
         return (
           <div {...sectionProps}>
-            <DailySchedule />
+            <DailySchedule 
+              events={schedule as any}
+              isLoading={isLoading}
+              error={error}
+              onSaveEvent={handleSaveScheduleEvent as any}
+              onDeleteEvent={handleDeleteScheduleEvent}
+            />
           </div>
         )
       case "analytics":
@@ -221,7 +271,7 @@ export default function Home() {
           </div>
         )
     }
-  }, [activeSection, events, tasks, habits, goals, notes, journals, reminders, schedule])
+  }, [activeSection, events, tasks, habits, goals, notes, journals, reminders, schedule, isLoading, error, achievements])
 
   if (isLoading) {
     return (

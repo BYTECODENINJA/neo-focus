@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect } from "react"
-import { Plus, Edit, Trash2, Clock, Save, X } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { Plus, Edit, Trash2, Clock, Save, X, Loader } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { db } from "@/lib/database"
+import { toast } from "sonner"
 import { Event } from "@/types"
 
 interface ScheduleEvent extends Event {
@@ -27,14 +27,18 @@ const eventColors = [
 
 const TIMELINE_HEIGHT = 24 * 64 // 24 hours * 64px/hour (h-16)
 
-// Common timezones
+interface DailyScheduleProps {
+  events: ScheduleEvent[]
+  isLoading: boolean
+  error: Error | null
+  onSaveEvent: (event: Omit<ScheduleEvent, 'id'> | ScheduleEvent) => Promise<void>
+  onDeleteEvent: (eventId: string) => Promise<void>
+}
 
-export function DailySchedule() {
-  const [events, setEvents] = useState<ScheduleEvent[]>([])
+export function DailySchedule({ events, isLoading, error, onSaveEvent, onDeleteEvent }: DailyScheduleProps) {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0])
   const [isEditing, setIsEditing] = useState(false)
   const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null)
-  const [selectedTimezone, setSelectedTimezone] = useState<string>("UTC")
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -43,200 +47,58 @@ export function DailySchedule() {
     color: "bg-purple-500",
   })
 
-  useEffect(() => {
-    loadEvents()
-  }, [selectedDate, selectedTimezone])
-
-  const loadEvents = async () => {
-    try {
-      // Get events from database
-      const data = await db.getAllData()
-      const scheduleEvents = (data.events || []).filter(
-        (event: Event) => event.eventType === "schedule" && event.date === selectedDate,
-      ) as ScheduleEvent[]
-      
-      // If no events found in database, try to load from localStorage
-      if (scheduleEvents.length === 0 && typeof window !== 'undefined') {
-        const localEvents = localStorage.getItem('neo-focus-events')
-        if (localEvents) {
-          const parsedEvents = JSON.parse(localEvents).filter(
-            (event: Event) => event.eventType === "schedule" && event.date === selectedDate
-          ) as ScheduleEvent[]
-          
-          // Convert times to selected timezone
-          const convertedEvents = parsedEvents.map(event => ({
-            ...event,
-            startTime: convertToTimezone(event.startTime, selectedDate),
-            endTime: convertToTimezone(event.endTime, selectedDate)
-          }))
-          
-          setEvents(convertedEvents)
-          return
-        }
-      }
-      
-      // Convert times to selected timezone
-      const convertedEvents = scheduleEvents.map(event => ({
-        ...event,
-        startTime: convertToTimezone(event.startTime, selectedDate),
-        endTime: convertToTimezone(event.endTime, selectedDate)
-      }))
-      
-      setEvents(convertedEvents)
-    } catch (error) {
-      console.error("Error loading events:", error)
-      // Try to load from localStorage as fallback
-      if (typeof window !== 'undefined') {
-        const localEvents = localStorage.getItem('neo-focus-events')
-        if (localEvents) {
-          const parsedEvents = JSON.parse(localEvents).filter(
-            (event: Event) => event.eventType === "schedule" && event.date === selectedDate
-          ) as ScheduleEvent[]
-          
-          // Convert times to selected timezone
-          const convertedEvents = parsedEvents.map(event => ({
-            ...event,
-            startTime: convertToTimezone(event.startTime, selectedDate),
-            endTime: convertToTimezone(event.endTime, selectedDate)
-          }))
-          
-          setEvents(convertedEvents)
-        }
-      }
-    }
-  }
-
-  const saveEvent = async () => {
+  const handleSave = async () => {
     if (!formData.title) {
-      alert("Event title is required.")
+      toast.error("Event title is required.")
       return
     }
-    
     if (formData.startTime >= formData.endTime) {
-      alert("End time must be after start time.")
+      toast.error("End time must be after start time.")
       return
     }
+
+    const eventToSave = {
+      ...(editingEvent || {}),
+      id: editingEvent?.id || Date.now().toString(),
+      title: formData.title,
+      description: formData.description || "",
+      date: selectedDate,
+      time: formData.startTime,
+      type: "personal",
+      createdAt: editingEvent?.createdAt || new Date().toISOString(),
+      startTime: formData.startTime,
+      endTime: formData.endTime,
+      color: formData.color,
+      eventType: "schedule",
+    } as ScheduleEvent;
 
     try {
-      const allData = await db.getAllData() || { events: [] }
-      const isNewEvent = !editingEvent
-
-      const newEvent: ScheduleEvent = {
-        id: editingEvent?.id || Date.now().toString(),
-        title: formData.title,
-        description: formData.description || "",
-        date: selectedDate,
-        time: formData.startTime,
-        type: "personal",
-        createdAt: new Date().toISOString(),
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-        color: formData.color,
-        eventType: "schedule",
-      }
-
-      // Get ALL events from the database
-      const existingEvents = allData.events || []
-      
-      // Filter out events on the selected date for conflict checking
-      const eventsForSelectedDate = existingEvents.filter(
-        (e: ScheduleEvent) =>
-          e.id !== newEvent.id && 
-          e.date === newEvent.date && 
-          e.eventType === "schedule"
-      )
-
-      const newStartTime = new Date(`${newEvent.date}T${newEvent.startTime}`).getTime()
-      const newEndTime = new Date(`${newEvent.date}T${newEvent.endTime}`).getTime()
-
-      for (const event of eventsForSelectedDate) {
-        if (!event.startTime || !event.endTime) continue;
-        
-        const existingStartTime = new Date(`${event.date}T${event.startTime}`).getTime()
-        const existingEndTime = new Date(`${event.date}T${event.endTime}`).getTime()
-
-        if (newStartTime < existingEndTime && newEndTime > existingStartTime) {
-          alert(`Time conflict with event: "${event.title}". Please choose a different time.`)
-          return
-        }
-      }
-
-      // Build the updated events array
-      let updatedEvents: Event[]
-      if (isNewEvent) {
-        // For new events, append to all existing events
-        updatedEvents = [...existingEvents, newEvent]
+      await onSaveEvent(eventToSave);
+      toast.success(editingEvent ? "Event updated" : "Event created");
+      resetForm();
+    } catch (err) {
+      if (err instanceof Error) {
+        toast.error(err.message);
       } else {
-        // For editing, update only the specific event
-        updatedEvents = existingEvents.map((event: Event) =>
-          event.id === newEvent.id ? newEvent : event
-        )
-      }
-
-      // Save events to database
-      await db.saveEvents(updatedEvents)
-      
-      // Backup to localStorage
-      try {
-        localStorage.setItem('neo-focus-events', JSON.stringify(updatedEvents))
-      } catch (err) {
-        console.error('Failed to save events to localStorage:', err)
-      }
-      
-      await loadEvents()
-      resetForm()
-    } catch (error) {
-      console.error("Error saving event:", error)
-      alert("Failed to save event. Please try again.")
-      
-      // Try to save to localStorage as fallback
-      try {
-        const localEvents = localStorage.getItem('neo-focus-events')
-        let events = localEvents ? JSON.parse(localEvents) : []
-        
-        const newEvent = {
-          id: editingEvent?.id || Date.now().toString(),
-          title: formData.title,
-          description: formData.description || "",
-          date: selectedDate,
-          time: formData.startTime,
-          startTime: formData.startTime,
-          endTime: formData.endTime,
-          color: formData.color,
-          type: "personal",
-          createdAt: new Date().toISOString(),
-          eventType: "schedule",
-        }
-        
-        if (editingEvent) {
-          events = events.map((event: any) => event.id === newEvent.id ? newEvent : event)
-        } else {
-          events.push(newEvent)
-        }
-        
-        localStorage.setItem('neo-focus-events', JSON.stringify(events))
-        await loadEvents()
-        resetForm()
-      } catch (err) {
-        console.error("Failed to save to localStorage:", err)
+        toast.error("Failed to save event.");
       }
     }
   }
 
-  const deleteEvent = async (eventId: string) => {
-    const allData = await db.getAllData()
-    const updatedEvents = (allData.events || []).filter(
-      (event: Event) => event.id !== eventId,
-    )
-    await db.saveAllData({ ...allData, events: updatedEvents })
-    await loadEvents()
+  const handleDelete = async (eventId: string) => {
+    try {
+      await onDeleteEvent(eventId);
+      toast.success("Event deleted");
+    } catch (err) {
+      toast.error("Failed to delete event.");
+    }
   }
 
   const startEdit = (event: ScheduleEvent) => {
     setEditingEvent(event)
     setFormData({
       title: event.title,
-      description: event.description,
+      description: event.description || "",
       startTime: event.startTime,
       endTime: event.endTime,
       color: event.color,
@@ -256,73 +118,55 @@ export function DailySchedule() {
     setIsEditing(false)
   }
 
-  // Convert time to the selected timezone
-  const convertToTimezone = (time: string, date: string) => {
-    if (!time || !date) return time;
-    
-    try {
-      const dateTimeString = `${date}T${time}:00Z`;
-      const utcDate = new Date(dateTimeString);
-      
-      // Create a date string with the timezone
-      const options: Intl.DateTimeFormatOptions = {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: selectedTimezone
-      };
-      
-      const formatter = new Intl.DateTimeFormat('en-US', options);
-      return formatter.format(utcDate);
-    } catch (error) {
-      console.error("Error converting timezone:", error);
-      return time;
-    }
-  }
-
   const timeToPosition = (time: string) => {
+    if (!time) return 0;
     const [hours, minutes] = time.split(":").map(Number)
     return ((hours * 60 + minutes) / (24 * 60)) * 100
   }
 
-  const hours = Array.from({ length: 24 }, (_, i) => i)
+  const hours = useMemo(() => Array.from({ length: 24 }, (_, i) => i), []);
 
-  const todayEvents = events.filter((event) => event.date === selectedDate)
+  const todayEvents = useMemo(() => 
+    (events || [])
+      .filter((event) => event.date === selectedDate)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime)), 
+    [events, selectedDate]
+  );
 
   return (
-    <div className="flex h-full gap-4">
+    <div className="flex h-full gap-4 p-4 bg-gray-900 text-white">
       <div className="w-96 space-y-4">
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-lg">
+            <CardTitle className="text-lg text-white">
               {isEditing ? (editingEvent ? "Edit Event" : "New Event") : "Schedule Event"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className={`text-sm font-medium mb-2 block`}>Date</label>
+              <label className={`text-sm font-medium mb-2 block text-gray-300`}>Date</label>
               <Input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className={`w-full`}
+                className={`w-full bg-gray-700 border-gray-600 text-white`}
               />
             </div>
 
-
-            {isEditing && (
+            {isEditing ? (
               <>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Event Title</label>
+                  <label className="text-sm font-medium mb-2 block text-gray-300">Event Title</label>
                   <Input
                     placeholder="Event title"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="bg-gray-700 border-gray-600 text-white"
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Description</label>
+                  <label className="text-sm font-medium mb-2 block text-gray-300">Description</label>
                   <Textarea
                     placeholder="Event description"
                     value={formData.description}
@@ -330,44 +174,47 @@ export function DailySchedule() {
                       setFormData({ ...formData, description: e.target.value })
                     }
                     rows={3}
+                    className="bg-gray-700 border-gray-600 text-white"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Start Time</label>
+                    <label className="text-sm font-medium mb-2 block text-gray-300">Start Time</label>
                     <Input
                       type="time"
                       value={formData.startTime}
                       onChange={(e) =>
                         setFormData({ ...formData, startTime: e.target.value })
                       }
+                      className="bg-gray-700 border-gray-600 text-white"
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium mb-2 block">End Time</label>
+                    <label className="text-sm font-medium mb-2 block text-gray-300">End Time</label>
                     <Input
                       type="time"
                       value={formData.endTime}
                       onChange={(e) =>
                         setFormData({ ...formData, endTime: e.target.value })
                       }
+                      className="bg-gray-700 border-gray-600 text-white"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Color</label>
+                  <label className="text-sm font-medium mb-2 block text-gray-300">Color</label>
                   <Select
                     value={formData.color}
                     onValueChange={(value) => setFormData({ ...formData, color: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-gray-800 border-gray-700 text-white">
                       {eventColors.map((color) => (
-                        <SelectItem key={color.value} value={color.value}>
+                        <SelectItem key={color.value} value={color.value} className="hover:bg-gray-700">
                           <div className="flex items-center gap-2">
                             <div className={`w-4 h-4 rounded ${color.value}`} />
                             {color.name}
@@ -379,19 +226,17 @@ export function DailySchedule() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={saveEvent} className="flex-1">
+                  <Button onClick={handleSave} className="flex-1 bg-purple-600 hover:bg-purple-700">
                     <Save className="h-4 w-4 mr-2" />
                     Save
                   </Button>
-                  <Button onClick={resetForm} variant="outline">
+                  <Button onClick={resetForm} variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               </>
-            )}
-
-            {!isEditing && (
-              <Button onClick={() => setIsEditing(true)} className="w-full">
+            ) : (
+              <Button onClick={() => setIsEditing(true)} className="w-full bg-purple-600 hover:bg-purple-700">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Event
               </Button>
@@ -399,36 +244,38 @@ export function DailySchedule() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-lg">Events for {selectedDate}</CardTitle>
+            <CardTitle className="text-lg text-white">Events for {selectedDate}</CardTitle>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[400px]">
               <div className="space-y-2">
-                {todayEvents.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-full">
+                    <Loader className="h-6 w-6 animate-spin text-purple-400" />
+                  </div>
+                ) : error ? (
+                  <p className="text-sm text-red-400 text-center py-4">Error loading events.</p>
+                ) : todayEvents.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">
                     No events scheduled
                   </p>
                 ) : (
-                  todayEvents
-                    .sort((a, b) => a.startTime.localeCompare(b.startTime))
-                    .map((event) => (
+                  todayEvents.map((event) => (
                       <Card
                         key={event.id}
-                        className="cursor-pointer hover:bg-accent transition-colors"
+                        className="bg-gray-700/50 hover:bg-gray-700 transition-colors border-l-4"
+                        style={{ borderLeftColor: event.color.replace('bg-', '').split('-')[0] }}
                       >
                         <CardContent className="p-3">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <div className={`w-3 h-3 rounded ${event.color}`} />
-                                <h4 className="font-semibold text-sm">{event.title}</h4>
-                              </div>
-                              <p className="text-xs text-muted-foreground mb-1">
+                              <h4 className="font-semibold text-sm text-white">{event.title}</h4>
+                              <p className="text-xs text-gray-300 mb-1">
                                 {event.description}
                               </p>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1 text-xs text-gray-400">
                                 <Clock className="h-3 w-3" />
                                 {event.startTime} - {event.endTime}
                               </div>
@@ -438,13 +285,15 @@ export function DailySchedule() {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => startEdit(event)}
+                                className="text-gray-400 hover:text-white"
                               >
                                 <Edit className="h-3 w-3" />
                               </Button>
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => deleteEvent(event.id)}
+                                onClick={() => handleDelete(event.id)}
+                                className="text-gray-400 hover:text-red-500"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
@@ -461,20 +310,20 @@ export function DailySchedule() {
       </div>
 
       <div className="flex-1 space-y-4">
-        <Card>
+        <Card className="bg-gray-800 border-gray-700 h-full">
           <CardHeader>
-            <CardTitle>24-Hour Timeline</CardTitle>
+            <CardTitle className="text-white">24-Hour Timeline</CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[700px]">
+            <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="relative" style={{ height: `${TIMELINE_HEIGHT}px` }}>
                 <div className="absolute top-0 left-0 w-full">
                   {hours.map((hour) => (
                     <div
                       key={hour}
-                      className="relative h-16 border-b border-border"
+                      className="relative h-16 border-b border-gray-700"
                     >
-                      <div className="absolute left-0 -top-2 w-16 text-sm text-muted-foreground">
+                      <div className="absolute left-0 -top-2 w-16 text-sm text-gray-400">
                         {hour.toString().padStart(2, "0")}:00
                       </div>
                     </div>
@@ -485,7 +334,9 @@ export function DailySchedule() {
                   {todayEvents.map((event) => {
                     const startPos = timeToPosition(event.startTime)
                     const endPos = timeToPosition(event.endTime)
-                    const height = endPos - startPos
+                    const height = Math.max(0, endPos - startPos)
+
+                    if (height === 0) return null;
 
                     return (
                       <div

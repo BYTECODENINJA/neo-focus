@@ -7,6 +7,7 @@ import http.server
 import socketserver
 import json
 import logging
+import bleach
 from pathlib import Path
 from database_manager import DatabaseManager
 
@@ -17,63 +18,108 @@ logger = logging.getLogger(__name__)
 class ApiRequestHandler(http.server.SimpleHTTPRequestHandler):
     db_manager = DatabaseManager('data/neofocus.db')
 
+    def _send_response(self, status_code, data=None, content_type='application/json'):
+        self.send_response(status_code)
+        self.send_header('Content-type', content_type)
+        self.end_headers()
+        if data:
+            self.wfile.write(json.dumps(data).encode())
+
     def do_GET(self):
-        if self.path == '/api/tasks':
+        if self.path == '/api/notes':
+            try:
+                notes_data = self.db_manager.get_notes()
+                notes = [
+                    {
+                        "id": n[0], "title": n[1], "content": n[2], "tags": n[3].split(',') if n[3] else [],
+                        "category": n[4], "createdAt": n[5], "updatedAt": n[6]
+                    }
+                    for n in notes_data
+                ]
+                self._send_response(200, notes)
+            except Exception as e:
+                logger.error(f"Error getting notes: {e}")
+                self._send_response(500)
+        elif self.path == '/api/tasks':
             try:
                 tasks = self.db_manager.get_tasks()
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps(tasks).encode())
+                self._send_response(200, tasks)
             except Exception as e:
                 logger.error(f"Error getting tasks: {e}")
-                self.send_response(500)
-                self.end_headers()
+                self._send_response(500)
         elif self.path == '/api/calendar-events':
             try:
                 events = self.db_manager.get_calendar_events()
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps(events).encode())
+                self._send_response(200, events)
             except Exception as e:
                 logger.error(f"Error getting calendar events: {e}")
-                self.send_response(500)
-                self.end_headers()
+                self._send_response(500)
         else:
             super().do_GET()
 
     def do_POST(self):
-        if self.path == '/api/tasks':
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        data = json.loads(post_data.decode('utf-8'))
+
+        if self.path == '/api/notes':
             try:
-                content_length = int(self.headers['Content-Length'])
-                post_data = self.rfile.read(content_length)
-                data = json.loads(post_data.decode('utf-8'))
+                # Sanitize content before saving
+                data['content'] = bleach.clean(data.get('content', ''), tags=bleach.sanitizer.ALLOWED_TAGS + ['p', 'h1', 'h2', 'h3', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'blockquote', 'pre', 'a', 'br'], attributes={'a': ['href']})
+                self.db_manager.add_note(data)
+                self._send_response(201, {'id': data['id']})
+            except Exception as e:
+                logger.error(f"Error adding note: {e}")
+                self._send_response(500)
+        elif self.path == '/api/tasks':
+            try:
                 task_id = self.db_manager.add_task(data['title'], data.get('category'), data.get('startTime'), data.get('endTime'))
-                self.send_response(201)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({'id': task_id}).encode())
+                self._send_response(201, {'id': task_id})
             except Exception as e:
                 logger.error(f"Error adding task: {e}")
-                self.send_response(500)
-                self.end_headers()
+                self._send_response(500)
         elif self.path == '/api/calendar-events':
             try:
-                content_length = int(self.headers['Content-Length'])
-                post_data = self.rfile.read(content_length)
-                data = json.loads(post_data.decode('utf-8'))
                 event_id = self.db_manager.add_calendar_event(data['title'], data['date'], data.get('time'), data.get('category'), data.get('recurring'))
-                self.send_response(201)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({'id': event_id}).encode())
+                self._send_response(201, {'id': event_id})
             except Exception as e:
                 logger.error(f"Error adding calendar event: {e}")
-                self.send_response(500)
-                self.end_headers()
+                self._send_response(500)
         else:
             super().do_POST()
+
+    def do_PUT(self):
+        if self.path.startswith('/api/notes/'):
+            note_id = self.path.split('/')[-1]
+            content_length = int(self.headers['Content-Length'])
+            put_data = self.rfile.read(content_length)
+            data = json.loads(put_data.decode('utf-8'))
+            data['id'] = note_id
+            
+            try:
+                # Sanitize content before updating
+                data['content'] = bleach.clean(data.get('content', ''), tags=bleach.sanitizer.ALLOWED_TAGS + ['p', 'h1', 'h2', 'h3', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'blockquote', 'pre', 'a', 'br'], attributes={'a': ['href']})
+                self.db_manager.update_note(data)
+                self._send_response(200, {'status': 'success'})
+            except Exception as e:
+                logger.error(f"Error updating note {note_id}: {e}")
+                self._send_response(500)
+        else:
+            self.send_response(404)
+            self.end_headers()
+            
+    def do_DELETE(self):
+        if self.path.startswith('/api/notes/'):
+            note_id = self.path.split('/')[-1]
+            try:
+                self.db_manager.delete_note(note_id)
+                self._send_response(200, {'status': 'success'})
+            except Exception as e:
+                logger.error(f"Error deleting note {note_id}: {e}")
+                self._send_response(500)
+        else:
+            self.send_response(404)
+            self.end_headers()
 
 class NeoFocusApp:
     def __init__(self):
@@ -141,16 +187,15 @@ class NeoFocusApp:
             'title': 'NEO FOCUS',
             'width': 1200,
             'height': 800,
-            'min_size': (1200, 800),
-            'resizable': False,
+            'min_size': (940, 600),
+            'resizable': True,
             'fullscreen': False,
             'frameless': False,
             'easy_drag': True,
             'text_select': True,
-            'confirm_close': False,
+            'confirm_close': True,
             'background_color': '#1E1B4B',
             'url': splash_url,
-            'webview_fixed_size': True  # Force fixed size regardless of display scaling
         }
         
         try:
